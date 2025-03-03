@@ -1,22 +1,24 @@
-// Import required stuff
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const path = require('path');
 require('dotenv').config();
 const ethers = require('ethers');
-// Express app configuration
+
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-// Global variable to store the Overledger OAuth token
+
 let overledgerToken = null;
-// Overledger API configuration
+
+/**
+ * Overledger API configuration
+ */
 const OVERLEDGER_API_CONFIG = {
-    BASE_URL: 'https://api.overledger.dev/api',
+    BASE_URL: 'https://api.overledger.dev',
     AUTH_URL: 'https://auth.overledger.dev/oauth2/token',
     API_VERSION: '3.0.0',
     NETWORK: {
@@ -24,13 +26,15 @@ const OVERLEDGER_API_CONFIG = {
         network: 'ethereum sepolia testnet'
     },
     TODO_LIST_CONTRACT_ADDRESS: process.env.TODO_LIST_CONTRACT_ADDRESS,
-    CHAIN_ID: 11155111 // Sepolia chainId
+    CHAIN_ID: 11155111
 };
-// Logger function for a fancy console output
+
+/**
+ * Basic logger for console
+ */
 function logger(type, message, details = null) {
     const timestamp = new Date().toISOString();
-    let logEntry = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
-    console.log(logEntry);
+    console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}`);
     if (details) {
         if (typeof details === 'object') {
             console.log('Details:', JSON.stringify(details, null, 2));
@@ -38,14 +42,15 @@ function logger(type, message, details = null) {
             console.log('Details:', details);
         }
     }
-    return { timestamp, type, message, details };
 }
-// Helper function to get Overledger API headers
+
+/**
+ * Get Overledger headers with Bearer token
+ */
 function getOverledgerHeaders() {
     if (!overledgerToken) {
-        throw new Error('Overledger auth token is not set. Please retrieve the token first.');
+        throw new Error('Overledger auth token is not set. Retrieve the token first.');
     }
-    logger('debug', 'Preparing API headers with auth token');
     return {
         accept: 'application/json',
         'content-type': 'application/json',
@@ -53,43 +58,30 @@ function getOverledgerHeaders() {
         Authorization: `Bearer ${overledgerToken}`
     };
 }
-// Helper function to sign transactions using ethers.js
+
+/**
+ * Sign an EIP-1559 transaction using ethers.js
+ */
 async function signTransaction(nativeData) {
-    try {
-        logger('info', 'Signing transaction', { to: nativeData.to, nonce: nativeData.nonce });
-        // Create a wallet instance using the private key
-        const wallet = new ethers.Wallet(process.env.MY_WALLET_PRIVATE_KEY);
-        logger('debug', `Wallet address: ${wallet.address}`);
-        // Use the gas parameters provided by Overledger
-        const transaction = {
-            to: nativeData.to,
-            nonce: nativeData.nonce,
-            gasLimit: nativeData.gas,
-            maxPriorityFeePerGas: nativeData.maxPriorityFeePerGas,
-            maxFeePerGas: nativeData.maxFeePerGas,
-            data: nativeData.data,
-            value: nativeData.value || "0",
-            chainId: nativeData.chainId || OVERLEDGER_API_CONFIG.CHAIN_ID,
-            type: 2 // EIP-1559 transaction type
-        };
-        logger('info', 'Using Overledger provided gas parameters', {
-            gasLimit: nativeData.gas,
-            maxPriorityFeePerGas: nativeData.maxPriorityFeePerGas,
-            maxFeePerGas: nativeData.maxFeePerGas
-        });
-        // Sign the transaction
-        const signedTx = await wallet.signTransaction(transaction);
-        logger('success', 'Transaction signed successfully');
-        return signedTx;
-    } catch (error) {
-        logger('error', 'Error signing transaction', error.message);
-        throw new Error(`Failed to sign transaction: ${error.message}`);
-    }
+    const wallet = new ethers.Wallet(process.env.MY_WALLET_PRIVATE_KEY);
+    const transaction = {
+        to: nativeData.to,
+        nonce: nativeData.nonce,
+        gasLimit: nativeData.gas,
+        maxPriorityFeePerGas: nativeData.maxPriorityFeePerGas,
+        maxFeePerGas: nativeData.maxFeePerGas,
+        data: nativeData.data,
+        value: nativeData.value || '0',
+        chainId: nativeData.chainId || OVERLEDGER_API_CONFIG.CHAIN_ID,
+        type: 2
+    };
+    return await wallet.signTransaction(transaction);
 }
-// Helper function to read smart contract data
-async function readSmartContract(functionName, inputParameters = [], outputParameters) {
-    logger('info', `Reading smart contract - Function: ${functionName}`, { inputParameters });
-    logger('debug', `Output parameters:`, outputParameters);
+
+/**
+ * Read from a smart contract via Overledger
+ */
+async function readSmartContract(functionName, inputParameters, outputParameters) {
     const payload = {
         location: OVERLEDGER_API_CONFIG.NETWORK,
         functionName,
@@ -97,322 +89,283 @@ async function readSmartContract(functionName, inputParameters = [], outputParam
         inputParameters,
         outputParameters
     };
-    logger('info', `Sending payload to Overledger:`, payload);
+    const requestInfo = {
+        url: `${OVERLEDGER_API_CONFIG.BASE_URL}/api/smart-contracts/read`,
+        method: 'POST',
+        headers: getOverledgerHeaders(),
+        body: payload
+    };
+
     try {
-        logger('info', `Making API call to ${OVERLEDGER_API_CONFIG.BASE_URL}/smart-contracts/read`);
-        const response = await axios.post(
-            `${OVERLEDGER_API_CONFIG.BASE_URL}/smart-contracts/read`,
-            payload,
-            { headers: getOverledgerHeaders() }
-        );
-        logger('success', `Successfully read smart contract - Function: ${functionName}`);
-        logger('info', `Response status: ${response.status}`);
-        logger('info', `Response data:`, response.data);
-        return response.data;
+        const response = await axios.post(requestInfo.url, requestInfo.body, { headers: requestInfo.headers });
+        return { request: requestInfo, response: response.data };
     } catch (error) {
-        logger('error', `Error reading smart contract - Function: ${functionName}`);
-        if (error.response) {
-            logger('error', `Response status: ${error.response.status}`);
-            logger('error', `Response data:`, error.response.data);
-        }
-        throw new Error(`Failed to read smart contract: ${error.message}`);
+        throw new Error(error.message);
     }
 }
-// Helper function to write to smart contract
+
+/**
+ * Write to a smart contract via Overledger
+ */
 async function writeSmartContract(functionName, inputParameters) {
-    logger('info', `Writing to smart contract - Function: ${functionName}`, { inputParameters });
-    // Validate input parameters - ensure they have all required fields
     const validatedParams = inputParameters.map(param => {
-        // Make sure type, value, and key are all set correctly
         if (!param.type || !param.value) {
-            logger('error', 'Invalid parameter structure', param);
             throw new Error(`Invalid parameter structure: ${JSON.stringify(param)}`);
         }
-        // Ensure proper formatting of parameters
-        let formattedParam = {
+        return {
             type: param.type,
             value: param.value,
-            key: param.key || param.name || 'value' // Fallback if key is missing
+            key: param.key || param.name || 'value'
         };
-        logger('debug', 'Formatted parameter', formattedParam);
-        return formattedParam;
     });
-    const payload = {
+
+    const preparePayload = {
         location: OVERLEDGER_API_CONFIG.NETWORK,
         functionName,
         inputParameters: validatedParams,
         signingAccountId: process.env.MY_WALLET_ADDRESS,
         smartContractId: OVERLEDGER_API_CONFIG.TODO_LIST_CONTRACT_ADDRESS
     };
-    logger('info', `Preparing transaction with payload:`, payload);
+
+    const prepareReqInfo = {
+        url: `${OVERLEDGER_API_CONFIG.BASE_URL}/api/preparations/transactions/smart-contracts/write`,
+        method: 'POST',
+        headers: getOverledgerHeaders(),
+        body: preparePayload
+    };
+
     try {
-        // Prepare transaction
-        logger('info', `Making API call to ${OVERLEDGER_API_CONFIG.BASE_URL}/preparations/transactions/smart-contracts/write`);
-        const prepareResponse = await axios.post(
-            `${OVERLEDGER_API_CONFIG.BASE_URL}/preparations/transactions/smart-contracts/write`,
-            payload,
-            { headers: getOverledgerHeaders() }
-        );
-        logger('info', `Preparation response status: ${prepareResponse.status}`);
-        logger('info', `Preparation response data:`, prepareResponse.data);
-        const { requestId, nativeData } = prepareResponse.data;
-        logger('success', `Transaction prepared successfully with requestId: ${requestId}`);
-        // Sign transaction
-        logger('info', 'Signing transaction with native data:', nativeData);
+        const prepResponse = await axios.post(prepareReqInfo.url, prepareReqInfo.body, {
+            headers: prepareReqInfo.headers
+        });
+        const { requestId, nativeData } = prepResponse.data;
+
         const signedTransaction = await signTransaction(nativeData);
-        logger('info', 'Signed transaction successfully');
-        // Execute transaction
-        logger('info', `Executing transaction with requestId: ${requestId}`);
-        logger('info', `Making API call to ${OVERLEDGER_API_CONFIG.BASE_URL}/executions/transactions`);
-        const executeResponse = await axios.post(
-            `${OVERLEDGER_API_CONFIG.BASE_URL}/executions/transactions`,
-            { signedTransaction, requestId },
-            { headers: getOverledgerHeaders() }
-        );
-        logger('info', `Execution response status: ${executeResponse.status}`);
-        logger('info', `Execution response data:`, executeResponse.data);
-        // Log transaction hash
-        const txHash = executeResponse.data.transactionId;
-        if (txHash) {
-            logger('success', `Transaction hash: ${txHash}`);
-        }
-        // Extract event messages
+
+        const executeReqInfo = {
+            url: `${OVERLEDGER_API_CONFIG.BASE_URL}/api/executions/transactions`,
+            method: 'POST',
+            headers: getOverledgerHeaders(),
+            body: { signedTransaction, requestId }
+        };
+        const execResponse = await axios.post(executeReqInfo.url, executeReqInfo.body, {
+            headers: executeReqInfo.headers
+        });
+
         let eventMessage = '';
-        if (executeResponse.data.events && executeResponse.data.events.length > 0) {
-            executeResponse.data.events.forEach((event, index) => {
+        if (execResponse.data.events && execResponse.data.events.length > 0) {
+            execResponse.data.events.forEach(event => {
                 if (event.eventName === 'TodoCreated' || event.eventName === 'TodoUpdated') {
-                    logger('success', `Event ${index + 1}: ${event.eventName}`);
-                    // Extract the message from event parameters if it exists
-                    const messageParam = event.eventParameters.find(param => param.key === 'message');
-                    if (messageParam) {
-                        eventMessage = messageParam.value;
-                        logger('success', `Smart Contract Message: ${eventMessage}`);
-                    }
-                    // Log all parameters for better understanding
-                    event.eventParameters.forEach(param => {
-                        logger('info', `  - ${param.key}: ${param.value}`);
-                    });
+                    const msgParam = event.eventParameters.find(p => p.key === 'message');
+                    if (msgParam) eventMessage = msgParam.value;
                 }
             });
         }
-        logger('success', `Transaction executed successfully (${functionName})`, executeResponse.data);
-        // Return response with transaction data
+
         return {
-            ...executeResponse.data,
-            eventMessage
+            calls: [
+                { request: prepareReqInfo, response: prepResponse.data },
+                { request: executeReqInfo, response: execResponse.data }
+            ],
+            eventMessage,
+            transactionId: execResponse.data.transactionId
         };
     } catch (error) {
-        logger('error', `Error writing to smart contract - Function: ${functionName}`);
-        if (error.response) {
-            logger('error', `Response status: ${error.response.status}`);
-            logger('error', `Response data:`, error.response.data);
-        }
-        throw new Error(`Failed to write to smart contract: ${error.message}`);
+        throw new Error(error.message);
     }
 }
-// Helper function to fetch todos from the blockchain via Overledger
+
+/**
+ * Fetch todos from the smart contract
+ */
 async function fetchTodos() {
-    logger('info', 'Fetching todos from blockchain');
     const walletAddress = process.env.MY_WALLET_ADDRESS.toLowerCase();
+    const logs = [];
+    let todos = [];
+
     try {
-        // Use the explicit getTodoCount function with the wallet address
-        logger('info', 'Reading todo count for address:', walletAddress);
-        const userCountResponse = await readSmartContract(
+        const readCount = await readSmartContract(
             'getTodoCount',
-            [{ value: walletAddress, type: 'address', key: 'owner' }],
-            [{ type: 'uint256', key: 'count' }]
+            [{ value: walletAddress, type: 'address' }],
+            [{ type: 'uint256' }]
         );
-        // Extract user todo count
-        const userCount = parseInt(userCountResponse.outputParameters?.[0]?.value || '0');
-        logger('info', `User has ${userCount} todos`);
-        let todos = [];
-        // For each user todo, get its ID and then fetch the todo details
+        logs.push(readCount);
+
+        const userCount = parseInt(readCount.response.outputParameters?.[0]?.value || '0');
+
         for (let i = 0; i < userCount; i++) {
-            logger('info', `Getting todo ID for index ${i}`);
-            const todoIdResponse = await readSmartContract(
+            const todoIdCall = await readSmartContract(
                 'getTodoId',
                 [
-                    { value: walletAddress, type: 'address', key: 'owner' },
-                    { value: i.toString(), type: 'uint256', key: 'index' }
+                    { value: walletAddress, type: 'address' },
+                    { value: i.toString(), type: 'uint256' }
                 ],
-                [{ type: 'uint256', key: 'id' }]
+                [{ type: 'uint256' }]
             );
-            const todoId = parseInt(todoIdResponse.outputParameters?.[0]?.value || '0');
-            logger('info', `Got todo ID: ${todoId}`);
+            logs.push(todoIdCall);
+
+            const todoId = parseInt(todoIdCall.response.outputParameters?.[0]?.value || '0');
             if (todoId > 0) {
-                logger('info', `Fetching todo #${todoId}`);
-                const todoResponse = await readSmartContract(
+                const todoCall = await readSmartContract(
                     'todos',
-                    [{ value: todoId.toString(), type: 'uint256', key: 'id' }],
+                    [{ value: todoId.toString(), type: 'uint256' }],
                     [
-                        { type: 'uint256', key: 'id' },
-                        { type: 'string', key: 'content' },
-                        { type: 'bool', key: 'completed' },
-                        { type: 'address', key: 'owner' }
+                        { type: 'uint256' },
+                        { type: 'string' },
+                        { type: 'bool' },
+                        { type: 'address' }
                     ]
                 );
-                // Properly extract todo values from the response
-                if (todoResponse.outputParameters && todoResponse.outputParameters.length >= 3) {
-                    // Extract the boolean value
-                    const completedValue = todoResponse.outputParameters[2].value;
-                    // Convert to actual boolean
-                    const completed = typeof completedValue === 'boolean'
-                        ? completedValue
-                        : (completedValue === 'true' || completedValue === true);
-                    const todo = {
-                        id: parseInt(todoResponse.outputParameters[0].value),
-                        content: todoResponse.outputParameters[1].value,
-                        completed: completed
-                    };
-                    logger('info', `Retrieved todo #${todo.id}`, todo);
-                    todos.push(todo);
+                logs.push(todoCall);
+
+                if (
+                    todoCall.response.outputParameters &&
+                    todoCall.response.outputParameters.length >= 3
+                ) {
+                    const completedVal = todoCall.response.outputParameters[2].value;
+                    const completed =
+                        typeof completedVal === 'boolean'
+                            ? completedVal
+                            : (completedVal === 'true' || completedVal === true);
+
+                    todos.push({
+                        id: parseInt(todoCall.response.outputParameters[0].value),
+                        content: todoCall.response.outputParameters[1].value,
+                        completed
+                    });
                 }
             }
         }
-        logger('success', `Successfully fetched ${todos.length} todos`);
-        return todos;
-    } catch (error) {
-        logger('error', 'Error fetching todos', error.message);
-        if (error.response) {
-            logger('error', 'Response status:', error.response.status);
-            logger('error', 'Response data:', error.response.data);
-        }
-        return [];
+        return { logs, todos };
+    } catch {
+        return { logs, todos: [] };
     }
 }
-// Helper function to fetch address balance
+
+/**
+ * Fetch balance of a given address
+ */
 async function fetchAddressBalance(address) {
-    logger('info', `Fetching balance for address: ${address}`);
+    const reqHeaders = {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        authorization: `Bearer ${overledgerToken}`
+    };
+
+    const requestInfo = {
+        url: `${OVERLEDGER_API_CONFIG.BASE_URL}/v2/autoexecution/search/address/balance/${address}`,
+        method: 'POST',
+        headers: reqHeaders,
+        body: {
+            location: { technology: 'ethereum', network: 'ethereum sepolia testnet' }
+        }
+    };
+
     try {
-        const options = {
-            method: 'POST',
-            headers: {
-                accept: 'application/json',
-                'content-type': 'application/json',
-                authorization: `Bearer ${overledgerToken}`
-            },
-            data: JSON.stringify({
-                location: {
-                    technology: 'ethereum',
-                    network: 'ethereum sepolia testnet'
-                }
-            })
-        };
         const response = await axios.post(
-            `https://api.overledger.dev/v2/autoexecution/search/address/balance/${address}`,
-            options.data,
-            { headers: options.headers }
+            requestInfo.url,
+            JSON.stringify(requestInfo.body),
+            { headers: requestInfo.headers }
         );
-        logger('success', 'Successfully fetched address balance', response.data);
-        return response.data;
+        return { request: requestInfo, response: response.data };
     } catch (error) {
-        logger('error', 'Error fetching address balance', error.response?.data || error.message);
-        throw new Error(`Failed to fetch address balance: ${error.message}`);
+        throw new Error(error.message);
     }
 }
-// ---------- Routes ---------- //
-// Index view (Todo App)
-app.get('/', async (req, res) => {
-    logger('info', 'Accessing main todo page');
-    try {
-        const todos = overledgerToken ? await fetchTodos() : [];
-        logger('info', 'Rendering index page', { todoCount: todos.length });
-        // Pass contract config and address to the template
-        res.render('index', {
-            todos,
-            token: overledgerToken,
-            OVERLEDGER_API_CONFIG,
-            walletAddress: process.env.MY_WALLET_ADDRESS
-        });
-    } catch (error) {
-        logger('error', 'Error rendering index page', error.message);
-        res.render('index', {
-            todos: [],
-            token: overledgerToken,
-            error: 'Failed to load todos',
-            OVERLEDGER_API_CONFIG,
-            walletAddress: process.env.MY_WALLET_ADDRESS
-        });
-    }
+
+/**
+ * Render index page
+ */
+app.get('/', (req, res) => {
+    res.render('index', {
+        todos: [],
+        token: overledgerToken,
+        OVERLEDGER_API_CONFIG,
+        walletAddress: process.env.MY_WALLET_ADDRESS
+    });
 });
-// Fetch todos endpoint
+
+/**
+ * Get todos
+ */
 app.get('/todos', async (req, res) => {
-    logger('info', 'API request: Fetch todos');
     try {
-        const todos = await fetchTodos();
-        logger('success', 'Successfully fetched todos', { count: todos.length });
-        res.json({ success: true, todos });
-    } catch (error) {
-        logger('error', 'Error fetching todos from blockchain', error.message);
+        const { logs, todos } = await fetchTodos();
+        res.json({ success: true, logs, todos });
+    } catch {
         res.status(500).json({ error: 'Failed to fetch todos' });
     }
 });
-// Add todo endpoint
+
+/**
+ * Add a new todo
+ */
 app.post('/todo/add', async (req, res) => {
     const { content } = req.body;
-    logger('info', 'API request: Add todo', { content });
     try {
-        const response = await writeSmartContract('addTodo', [
-            { value: content, type: 'string', key: 'content' }
+        const result = await writeSmartContract('addTodo', [
+            { value: content, type: 'string' }
         ]);
-        logger('success', 'Todo added successfully', response);
         res.json({
             success: true,
-            transactionId: response.transactionId,
-            message: response.eventMessage || 'Todo added successfully!'
+            calls: result.calls,
+            transactionId: result.transactionId,
+            message: result.eventMessage || 'Todo added successfully!'
         });
     } catch (error) {
-        logger('error', 'Error adding todo', error.message);
         res.status(500).json({ error: error.message });
     }
 });
-// Toggle todo completion endpoint
+
+/**
+ * Toggle todo completion
+ */
 app.post('/todo/toggle/:id', async (req, res) => {
     const { id } = req.params;
-    logger('info', 'API request: Toggle todo', { id });
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+        return res.status(400).json({ error: `Invalid todo ID: ${id}` });
+    }
     try {
-        // Make sure we're passing the ID properly - ensure it's a proper numeric value
-        const numericId = parseInt(id, 10);
-        if (isNaN(numericId)) {
-            throw new Error(`Invalid todo ID: ${id}`);
-        }
-        logger('info', `Toggling todo #${numericId}`);
-        // Execute the toggle function
-        const response = await writeSmartContract('toggleTodo', [
-            { type: 'uint256', value: numericId.toString(), key: 'id' }
+        const result = await writeSmartContract('toggleTodo', [
+            { value: numericId.toString(), type: 'uint256' }
         ]);
-        logger('success', `Todo #${numericId} toggle transaction completed`, response);
         res.json({
             success: true,
-            transactionId: response.transactionId,
-            message: response.eventMessage || `Todo #${numericId} status toggled successfully!`
+            calls: result.calls,
+            transactionId: result.transactionId,
+            message: result.eventMessage || `Todo #${numericId} toggled successfully!`
         });
     } catch (error) {
-        logger('error', `Error toggling todo #${id}`, error.message);
         res.status(500).json({ error: error.message });
     }
 });
-// Fetch address balance endpoint
-app.get('/balance', async (req, res) => {
-    logger('info', 'API request: Fetch address balance');
+
+/**
+ * Fetch balance for a given address
+ */
+app.get('/balance/:address', async (req, res) => {
+    const { address } = req.params;
     try {
-        const address = process.env.MY_WALLET_ADDRESS;
-        const balanceResponse = await fetchAddressBalance(address);
-        logger('success', 'Successfully fetched address balance', balanceResponse);
-        res.json({ success: true, balanceResponse });
+        const balResult = await fetchAddressBalance(address);
+        res.json({
+            success: true,
+            overledgerReq: balResult.request,
+            overledgerRes: balResult.response
+        });
     } catch (error) {
-        logger('error', 'Error fetching address balance', error.message);
         res.status(500).json({ error: 'Failed to fetch address balance' });
     }
 });
-// OAuth token retrieval endpoint
+
+/**
+ * Retrieve OAuth token
+ */
 app.post('/auth', async (req, res) => {
-    logger('info', 'API request: Retrieve OAuth token');
     const { OVERLEDGER_API_KEY, OVERLEDGER_API_SECRET } = process.env;
     const basicAuth = Buffer.from(`${OVERLEDGER_API_KEY}:${OVERLEDGER_API_SECRET}`).toString('base64');
     try {
         const bodyData = new URLSearchParams({ grant_type: 'client_credentials' }).toString();
-        logger('info', 'Requesting OAuth token from Overledger');
         const response = await axios.post(OVERLEDGER_API_CONFIG.AUTH_URL, bodyData, {
             headers: {
                 accept: 'application/json',
@@ -421,17 +374,11 @@ app.post('/auth', async (req, res) => {
             }
         });
         overledgerToken = response.data.access_token;
-        logger('success', 'OAuth token retrieved successfully');
         res.json({ success: true, token: overledgerToken });
-    } catch (error) {
-        logger('error', 'Error retrieving auth token', error.response?.data || error.message);
+    } catch {
         res.status(500).json({ error: 'Failed to retrieve auth token' });
     }
 });
-// Start server
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    logger('info', `Server is running on port ${PORT}`);
-    logger('info', `Contract address: ${OVERLEDGER_API_CONFIG.TODO_LIST_CONTRACT_ADDRESS}`);
-    logger('info', `Signing account: ${process.env.MY_WALLET_ADDRESS}`);
-});
+app.listen(PORT);

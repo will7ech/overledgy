@@ -1,102 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overledgy | Overledger Demo App</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
-    <link rel="icon" type="image/png" href="/assets/images/pic-pizza.png">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Overledgy | Overledger API Demo App</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Quantico:wght@700&family=Roboto&display=swap"
+            rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="icon" type="image/png" href="/assets/images/pic-pizza.png" />
 </head>
 <body>
 <div class="container">
     <header>
         <h1>OVERLEDGY</h1>
-        <h2>Overledger Demo App</h2>
-        <p>Want to start developing with Overledger? you may want to use this as your first simple example, look at how it works, play around, and do you own thing!</p>
+        <h2>Overledger API Demo App</h2>
+        <p>Use this simple example to see how Overledger works and experiment on your own!</p>
     </header>
+
     <!-- Auth Token Section -->
     <section id="auth-section" class="card">
-        <h2>Auth Token</h2>
-        <div id="auth-token-display">
-            <% if (token) { %>
-                <div class="token-container">
-                    <label for="currentToken">Current token:</label>
-                    <textarea id="currentToken" rows="3" readonly><%= token %></textarea>
-                </div>
-            <% } else { %>
-                <p>No token set. Please get an auth token before using the app.</p>
-            <% } %>
-            <button id="getAuthTokenBtn" class="btn btn-primary">Get Auth Token</button>
-            <div id="auth-status"></div>
+        <div class="section-header" style="margin-bottom: 0; line-height: 1; justify-content: space-between;">
+            <div>
+                <h2 class="play-mode-title">Auth Token</h2>
+                <h2 class="info-mode-title" style="display: none;">How to retrieve a token</h2>
+            </div>
+            <img
+                    src="/assets/images/icon-question.png"
+                    alt="mode switch"
+                    class="mode-switch-icon"
+            />
+        </div>
+        <div class="play-mode slide-toggle open">
+            <div id="auth-token-display">
+                <% if (token) { %>
+                    <div class="token-container">
+                        <label for="currentToken">Current token:</label>
+                        <textarea id="currentToken" rows="3" readonly><%= token %></textarea>
+                    </div>
+                    <button id="getAuthTokenBtn" class="btn btn-primary">Get Auth Token</button>
+                    <button id="copyAuthTokenBtn" class="btn btn-secondary">Copy Token</button>
+                    <div id="auth-status"></div>
+                <% } else { %>
+                    <p>No token set. Please get an auth token before using the app.</p>
+                    <button id="getAuthTokenBtn" class="btn btn-primary">Get Auth Token</button>
+                    <button id="copyAuthTokenBtn" class="btn btn-secondary" disabled>Copy Token</button>
+                    <div id="auth-status"></div>
+                <% } %>
+            </div>
+        </div>
+        <div class="info-mode slide-toggle">
+            <div class="info-mode-title" style="display: none;">
+                <h2>How to retrieve a token</h2>
+            </div>
+            <p>Overledger uses OAuth 2.0. To retrieve a token, you make a <strong>POST</strong> request to:</p>
+            <pre>https://auth.overledger.dev/oauth2/token</pre>
+            <p>Include your Overledger API Key and Secret in the Authorization header, using Basic Auth. The body should include:</p>
+            <pre>
+grant_type=client_credentials
+      </pre>
+            <p>Overledger responds with a JSON object containing your access token:</p>
+            <pre>
+{
+  "access_token": "xxx",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+      </pre>
+            <p>Use this token in subsequent Overledger calls by adding the <code>Authorization: Bearer &lt;TOKEN&gt;</code> header.</p>
         </div>
     </section>
+
     <!-- Balance Section -->
     <section id="balance-section" class="card">
-        <h2>Fetch Address Balance</h2>
-        <div class="address-container">
-            <label for="walletAddress">Wallet Address:</label>
-            <textarea id="walletAddress" rows="1" readonly data-contract-address="<%= OVERLEDGER_API_CONFIG.TODO_LIST_CONTRACT_ADDRESS %>"><%= walletAddress %></textarea>
-            <button id="fetchBalanceBtn" class="btn btn-secondary" <%= !token ? 'disabled="disabled"' : '' %>>Fetch Balance</button>
+        <div class="section-header" style="margin-bottom: 0; line-height: 1; justify-content: space-between;">
+            <div>
+                <h2 class="play-mode-title">Fetch Address Balance</h2>
+                <h2 class="info-mode-title" style="display: none;">How to fetch a balance</h2>
+            </div>
+            <img
+                    src="/assets/images/icon-question.png"
+                    alt="mode switch"
+                    class="mode-switch-icon"
+            />
+        </div>
+        <div class="play-mode slide-toggle open">
+            <form id="balanceForm" class="todo-form">
+                <input
+                        type="text"
+                        id="balanceAddressInput"
+                        pattern="[a-zA-Z0-9]+"
+                        required
+                        value="<%= walletAddress %>"
+                />
+                <button
+                        type="submit"
+                        id="fetchBalanceBtn"
+                        class="btn btn-primary"
+                        <%= !token ? 'disabled="disabled"' : '' %>
+                >
+                    Fetch Balance
+                </button>
+            </form>
             <div id="balance-status"></div>
             <div id="balance-result" class="balance-result"></div>
         </div>
-    </section>
-    <!-- Todo App Section -->
-    <section id="todo-section" class="card">
-        <h2>Todo List</h2>
-        <!-- Form to add a new Todo -->
-        <form id="addTodoForm" class="todo-form">
-            <input type="text" name="content" placeholder="Enter new todo" required>
-            <button type="submit" class="btn btn-primary" id="addTodoBtn" <%= !token ? 'disabled="disabled"' : '' %>>Add Todo</button>
-        </form>
-        <div id="transaction-status"></div>
-        <button id="fetchTodosBtn" class="btn btn-secondary" <%= !token ? 'disabled="disabled"' : '' %>>Fetch Todos from Blockchain</button>
-        <div id="todoList" class="todo-container">
-            <% if (locals.todos && todos.length > 0) { %>
-                <h3>Your Todos</h3>
-                <% todos.forEach(function(todo) { %>
-                    <div class="todo-item <%= todo.completed ? 'completed' : '' %>">
-                        <div class="todo-content">
-                            <span class="todo-text"><%= todo.content %></span>
-                            <span class="todo-id">ID: <%= todo.id %></span>
-                        </div>
-                        <div class="todo-actions">
-                            <button class="btn-toggle" data-id="<%= todo.id %>">
-                                <%= todo.completed ? 'Set as undone' : 'Mark as done!' %>
-                            </button>
-                        </div>
-                    </div>
-                <% }); %>
-            <% } else { %>
-                <p>Click "Fetch Todos" to load your todo items from the blockchain.</p>
-            <% } %>
+        <div class="info-mode slide-toggle">
+            <div class="info-mode-title" style="display: none;">
+                <h2>How to fetch a balance</h2>
+            </div>
+            <p>To fetch an address balance from Overledger, call:</p>
+            <pre>POST https://api.overledger.dev/v2/autoexecution/search/address/balance/&lt;ADDRESS&gt;</pre>
+            <p>Include these elements in the request body:</p>
+            <pre>
+{
+  "location": {
+    "technology": "ethereum",
+    "network": "ethereum sepolia testnet"
+  }
+}
+      </pre>
+            <p>Also include your OAuth token as a <code>Bearer</code> token in the Authorization header. The response will provide balance information, address details, and a timestamp.</p>
         </div>
     </section>
+
+    <!-- Todo Section -->
+    <section id="todo-section" class="card">
+        <div class="section-header" style="margin-bottom: 0; line-height: 1; justify-content: space-between;">
+            <div>
+                <h2 class="play-mode-title">Todo List</h2>
+                <h2 class="info-mode-title" style="display: none;">How to interact with a smart contract</h2>
+            </div>
+            <img
+                    src="/assets/images/icon-question.png"
+                    alt="mode switch"
+                    class="mode-switch-icon"
+            />
+        </div>
+        <div class="play-mode slide-toggle open">
+            <form id="addTodoForm" class="todo-form">
+                <input type="text" name="content" placeholder="Enter new todo" required />
+                <button
+                        type="submit"
+                        class="btn btn-primary"
+                        id="addTodoBtn"
+                        <%= !token ? 'disabled="disabled"' : '' %>
+                >
+                    Add Todo
+                </button>
+            </form>
+            <div id="transaction-status"></div>
+            <div id="todoList" class="todo-container">
+                <% if (todos && todos.length > 0) { %>
+                    <h3>Your Todos</h3>
+                    <% todos.forEach(function(todo) { %>
+                        <div class="todo-item <%= todo.completed ? 'completed' : '' %>">
+                            <div class="todo-content">
+                                <span class="todo-text"><%= todo.content %></span>
+                                <span class="todo-id">ID: <%= todo.id %></span>
+                            </div>
+                            <div class="todo-actions">
+                                <button class="btn-toggle" data-id="<%= todo.id %>">
+                                    <%= todo.completed ? 'Undone' : 'Done' %>
+                                </button>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p>Click "Fetch Todos" to load your todo items from the blockchain.</p>
+                <% } %>
+            </div>
+            <button
+                    id="fetchTodosBtn"
+                    class="btn btn-secondary"
+                    style="margin-top: 1rem;"
+                    <%= !token ? 'disabled="disabled"' : '' %>
+            >
+                Fetch Todos from Blockchain
+            </button>
+        </div>
+        <div class="info-mode slide-toggle">
+            <div class="info-mode-title" style="display: none;">
+                <h2>How to interact with a smart contract</h2>
+            </div>
+            <p>Overledger makes it easy to read from or write to a smart contract:</p>
+            <ul>
+                <li>For reads, call:
+                    <pre>POST https://api.overledger.dev/api/smart-contracts/read</pre>
+                    Provide <code>functionName</code>, <code>inputParameters</code>, and <code>outputParameters</code> along with your OAuth token.
+                </li>
+                <li>For writes, you prepare and execute a transaction:
+                    <pre>POST https://api.overledger.dev/api/preparations/transactions/smart-contracts/write</pre>
+                    <p>You receive <code>nativeData</code> to sign. Then you submit the signed transaction at:</p>
+                    <pre>POST https://api.overledger.dev/api/executions/transactions</pre>
+                    <p>On success, Overledger provides the transaction hash and event details.</p>
+                </li>
+            </ul>
+            <p>This Todo List is a basic example of how to store data on the Ethereum Sepolia testnet using Overledger as the bridging layer.</p>
+        </div>
+    </section>
+
     <!-- Console Section -->
     <section id="console-section" class="card">
-        <div class="consologger-header">
-            <h2>Console</h2>
-            <div class="consologger-controls">
-                <button id="clearConsoleBtn" class="btn btn-danger btn-sm">Clear Console</button>
+        <div class="section-header" style="margin-bottom: 0; line-height: 1; justify-content: space-between;">
+            <div>
+                <h2 class="play-mode-title">Console</h2>
+                <h2 class="info-mode-title" style="display: none;">Debugging logs</h2>
+            </div>
+            <img
+                    src="/assets/images/icon-question.png"
+                    alt="mode switch"
+                    class="mode-switch-icon"
+            />
+        </div>
+        <div class="play-mode slide-toggle open">
+            <div id="consologger" class="consologger">
+                <button id="clearConsoleBtn" class="btn-clear-console">Clear</button>
             </div>
         </div>
-        <div id="consologger" class="consologger"></div>
+        <div class="info-mode slide-toggle">
+            <div class="info-mode-title" style="display: none;">
+                <h2>Debugging logs</h2>
+            </div>
+            <p>All Overledger requests and responses are shown here, so you can see the exact payloads being sent and received.</p>
+            <p>Each time we interact with Overledger, the relevant details appear in chronological order.</p>
+        </div>
     </section>
+
     <footer>
         <div class="footer-content">
             <p>Blockchain Todo App using Overledger API and Ethereum</p>
             <div class="social-icons">
                 <a href="https://github.com/will7ech" target="_blank">
-                    <img src="/assets/images/icon-github.png" alt="GitHub">
+                    <img src="/assets/images/icon-github.png" alt="GitHub" />
                 </a>
                 <a href="https://www.linkedin.com/in/will7ech/" target="_blank">
-                    <img src="/assets/images/icon-linkedin.png" alt="LinkedIn">
+                    <img src="/assets/images/icon-linkedin.png" alt="LinkedIn" />
                 </a>
                 <a href="https://www.reddit.com/user/Will7ech/" target="_blank">
-                    <img src="/assets/images/icon-reddit.png" alt="Reddit">
+                    <img src="/assets/images/icon-reddit.png" alt="Reddit" />
                 </a>
                 <a href="https://will7ech.com" target="_blank">
-                    <img src="/assets/images/icon-pizza.png" alt="Website">
+                    <img src="/assets/images/icon-pizza.png" alt="Website" />
                 </a>
             </div>
         </div>
