@@ -1,6 +1,12 @@
 /**
  * public/assets/js/general.js
  */
+
+// Global states to track if we have a wallet loaded
+// We'll update these after .env is detected or user imports a phrase
+let hasLocalWallet = false;
+let currentWalletAddress = '';
+
 function logToConsole(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString();
     const loggerEl = document.getElementById('consologger');
@@ -23,6 +29,12 @@ function logToConsole(message, type = 'info') {
     line.appendChild(msgSpan);
     loggerEl.appendChild(line);
     loggerEl.scrollTop = loggerEl.scrollHeight;
+}
+
+function getCurrentAuthToken() {
+    const tokenTextarea = document.getElementById('currentToken');
+    if (!tokenTextarea) return null;
+    return tokenTextarea.value.trim() || null;
 }
 
 function scrollToConsole() {
@@ -56,6 +68,46 @@ function getEtherscanLink(txHash) {
     return `<a href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank">${txHash}</a>`;
 }
 
+/**
+ * If no token => everything is disabled
+ * If token => fetch is enabled
+ * If token + wallet => addTodo & toggles are enabled
+ */
+function updateButtonStates(token) {
+    const addTodoBtn = document.getElementById('addTodoBtn');
+    const fetchTodosBtn = document.getElementById('fetchTodosBtn');
+    const fetchBalanceBtn = document.getElementById('fetchBalanceBtn');
+    const copyTokenBtn = document.getElementById('copyAuthTokenBtn');
+
+    if (!token) {
+        // No token => disable all
+        addTodoBtn?.setAttribute('disabled', 'disabled');
+        fetchTodosBtn?.setAttribute('disabled', 'disabled');
+        fetchBalanceBtn?.setAttribute('disabled', 'disabled');
+        copyTokenBtn?.setAttribute('disabled', 'disabled');
+        logToConsole('No auth token. Buttons disabled.', 'warning');
+        return;
+    }
+
+    // We do have a token => fetch actions are enabled
+    fetchTodosBtn?.removeAttribute('disabled');
+    fetchBalanceBtn?.removeAttribute('disabled');
+    copyTokenBtn?.removeAttribute('disabled');
+
+    // But addTodo or toggles need a wallet
+    if (hasLocalWallet) {
+        addTodoBtn?.removeAttribute('disabled');
+        logToConsole('Auth token + wallet => addTodo enabled.', 'info');
+        // The toggle buttons are dynamic; we'll check them at render time too
+    } else {
+        addTodoBtn?.setAttribute('disabled', 'disabled');
+        logToConsole('No wallet => addTodo disabled.', 'warning');
+    }
+}
+
+/**
+ * Fetch Overledger auth token
+ */
 function getAuthToken() {
     showStatus('Requesting authentication token...', 'loading', 'auth-status');
     fetch('/auth', { method: 'POST' })
@@ -108,27 +160,9 @@ function copyAuthToken() {
         });
 }
 
-function updateButtonStates(token) {
-    const addTodoBtn = document.getElementById('addTodoBtn');
-    const fetchTodosBtn = document.getElementById('fetchTodosBtn');
-    const fetchBalanceBtn = document.getElementById('fetchBalanceBtn');
-    const copyTokenBtn = document.getElementById('copyAuthTokenBtn');
-
-    if (!token) {
-        addTodoBtn?.setAttribute('disabled', 'disabled');
-        fetchTodosBtn?.setAttribute('disabled', 'disabled');
-        fetchBalanceBtn?.setAttribute('disabled', 'disabled');
-        copyTokenBtn?.setAttribute('disabled', 'disabled');
-        logToConsole('No auth token. Buttons disabled.', 'warning');
-        return;
-    }
-    addTodoBtn?.removeAttribute('disabled');
-    fetchTodosBtn?.removeAttribute('disabled');
-    fetchBalanceBtn?.removeAttribute('disabled');
-    copyTokenBtn?.removeAttribute('disabled');
-    logToConsole('Auth token available. Buttons enabled.', 'info');
-}
-
+/**
+ * Fetch address balance
+ */
 async function handleFetchBalance(e) {
     e.preventDefault();
     const addressInput = document.getElementById('balanceAddressInput');
@@ -145,10 +179,19 @@ async function handleFetchBalance(e) {
         const data = await res.json();
         if (data.success) {
             if (data.overledgerReq?.headers?.authorization) {
-                data.overledgerReq.headers.authorization = trimBearer(data.overledgerReq.headers.authorization);
+                data.overledgerReq.headers.authorization = trimBearer(
+                    data.overledgerReq.headers.authorization
+                );
             }
-            logToConsole(`Overledger Request:\n${JSON.stringify(data.overledgerReq, null, 2)}`, 'request');
-            logToConsole(`Overledger Response:\n${JSON.stringify(data.overledgerRes, null, 2)}`, 'response');
+            logToConsole('Reading address balance from Overledger...', 'info');
+            logToConsole(
+                `Overledger Request:\n${JSON.stringify(data.overledgerReq, null, 2)}`,
+                'request'
+            );
+            logToConsole(
+                `Overledger Response:\n${JSON.stringify(data.overledgerRes, null, 2)}`,
+                'response'
+            );
 
             const balData = data.overledgerRes.executionAddressBalanceSearchResponse;
             if (balData?.balances?.length) {
@@ -175,8 +218,13 @@ async function handleFetchBalance(e) {
     scrollToConsole();
 }
 
+/**
+ * Fetch all todos
+ */
 function fetchTodos() {
     showStatus('Fetching todos...', 'loading');
+    logToConsole('Reading smart contract data for Todos...', 'info');
+
     fetch('/todos')
         .then(res => res.json())
         .then(data => {
@@ -187,11 +235,24 @@ function fetchTodos() {
             }
             data.logs.forEach(logItem => {
                 if (logItem.request.headers?.Authorization) {
-                    logItem.request.headers.Authorization = trimBearer(logItem.request.headers.Authorization);
+                    logItem.request.headers.Authorization = trimBearer(
+                        logItem.request.headers.Authorization
+                    );
                 }
-                logToConsole(`Overledger Request:\n${JSON.stringify(logItem.request, null, 2)}`, 'request');
-                logToConsole(`Overledger Response:\n${JSON.stringify(logItem.response, null, 2)}`, 'response');
+                // Additional info logs about Overledger process
+                if (logItem.request.url.includes('smart-contracts/read')) {
+                    logToConsole('Reading contract data via Overledger...', 'info');
+                }
+                logToConsole(
+                    `Overledger Request:\n${JSON.stringify(logItem.request, null, 2)}`,
+                    'request'
+                );
+                logToConsole(
+                    `Overledger Response:\n${JSON.stringify(logItem.response, null, 2)}`,
+                    'response'
+                );
             });
+
             renderTodos(data.todos);
             showStatus('Todos fetched successfully!', 'success');
             scrollToConsole();
@@ -203,6 +264,9 @@ function fetchTodos() {
         });
 }
 
+/**
+ * Render the user's todos and enable toggling if we have a wallet
+ */
 function renderTodos(todos) {
     const todoList = document.getElementById('todoList');
     if (!todoList) return;
@@ -219,15 +283,27 @@ function renderTodos(todos) {
           <span class="todo-id">ID: ${td.id}</span>
         </div>
         <div class="todo-actions">
-          <button class="btn-toggle" data-id="${td.id}">${td.completed ? 'Undone' : 'Done'}</button>
+          <button class="btn-toggle" data-id="${td.id}" 
+            ${(!hasLocalWallet) ? 'disabled' : ''}>
+            ${td.completed ? 'Undone' : 'Done'}
+          </button>
         </div>
       </div>
     `;
     });
     todoList.innerHTML = html;
-    document.querySelectorAll('.btn-toggle').forEach(btn => btn.addEventListener('click', toggleTodo));
+
+    // If we do have a wallet, attach toggle listeners
+    if (hasLocalWallet) {
+        document.querySelectorAll('.btn-toggle').forEach(btn => {
+            btn.addEventListener('click', toggleTodo);
+        });
+    }
 }
 
+/**
+ * Add a new todo
+ */
 function handleAddTodo(e) {
     e.preventDefault();
     const content = e.target.content.value.trim();
@@ -235,7 +311,8 @@ function handleAddTodo(e) {
         showStatus('Please enter a todo item.', 'error');
         return;
     }
-    showStatus('Submitting new todo...', 'loading');
+    showStatus('Preparing Overledger transaction for addTodo...', 'loading');
+
     fetch('/todo/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -252,8 +329,19 @@ function handleAddTodo(e) {
                 if (call.request.headers?.Authorization) {
                     call.request.headers.Authorization = trimBearer(call.request.headers.Authorization);
                 }
-                logToConsole(`Overledger Request:\n${JSON.stringify(call.request, null, 2)}`, 'request');
-                logToConsole(`Overledger Response:\n${JSON.stringify(call.response, null, 2)}`, 'response');
+                if (call.request.url.includes('smart-contracts/write')) {
+                    logToConsole('Preparing & writing to smart contract via Overledger...', 'info');
+                } else if (call.request.url.includes('executions/transactions')) {
+                    logToConsole('Executing signed transaction on Overledger...', 'info');
+                }
+                logToConsole(
+                    `Overledger Request:\n${JSON.stringify(call.request, null, 2)}`,
+                    'request'
+                );
+                logToConsole(
+                    `Overledger Response:\n${JSON.stringify(call.response, null, 2)}`,
+                    'response'
+                );
             });
             showStatus(result.message || 'Todo added successfully!', 'success');
             if (result.transactionId) {
@@ -269,9 +357,13 @@ function handleAddTodo(e) {
         });
 }
 
+/**
+ * Toggle the completion status of a todo
+ */
 function toggleTodo(e) {
     const todoId = e.target.dataset.id;
-    showStatus(`Toggling todo #${todoId}...`, 'loading');
+    showStatus(`Preparing Overledger transaction for toggleTodo(${todoId})...`, 'loading');
+
     fetch(`/todo/toggle/${todoId}`, { method: 'POST' })
         .then(res => res.json())
         .then(result => {
@@ -284,8 +376,19 @@ function toggleTodo(e) {
                 if (call.request.headers?.Authorization) {
                     call.request.headers.Authorization = trimBearer(call.request.headers.Authorization);
                 }
-                logToConsole(`Overledger Request:\n${JSON.stringify(call.request, null, 2)}`, 'request');
-                logToConsole(`Overledger Response:\n${JSON.stringify(call.response, null, 2)}`, 'response');
+                if (call.request.url.includes('smart-contracts/write')) {
+                    logToConsole('Preparing & writing to smart contract via Overledger...', 'info');
+                } else if (call.request.url.includes('executions/transactions')) {
+                    logToConsole('Executing signed transaction on Overledger...', 'info');
+                }
+                logToConsole(
+                    `Overledger Request:\n${JSON.stringify(call.request, null, 2)}`,
+                    'request'
+                );
+                logToConsole(
+                    `Overledger Response:\n${JSON.stringify(call.response, null, 2)}`,
+                    'response'
+                );
             });
             showStatus(result.message || `Todo #${todoId} toggled!`, 'success');
             if (result.transactionId) {
@@ -300,6 +403,9 @@ function toggleTodo(e) {
         });
 }
 
+/**
+ * Handle toggling the “info” mode in each card
+ */
 function toggleSectionMode(icon) {
     const card = icon.closest('.card');
     if (!card) return;
@@ -323,18 +429,55 @@ function toggleSectionMode(icon) {
     }
 }
 
+/**
+ * On DOM load, set up event listeners.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     logToConsole('Application initialized. Ready to rumble!', 'info');
 
+    // Initially detect if we have .env wallet from server
+    // (We pass these from EJS if you like, or do a GET /wallet/status
+    // For simplicity, let's do a quick check with partial data:
+    // We'll see if the server said "walletDetected" in the body data attribute
+    // or we can do a small fetch. We'll do the simpler approach:
+    // (If you prefer a fetch, replace it.)
+    const loadedSection = document.getElementById('walletLoadedSection');
+    const loadedSectionStyle = window.getComputedStyle(loadedSection);
+    hasLocalWallet = (loadedSectionStyle.display !== 'none');
+    if (hasLocalWallet) {
+        const addrSpan = document.getElementById('currentWalletAddress');
+        if (addrSpan) {
+            currentWalletAddress = addrSpan.textContent.trim();
+        }
+    }
+
+    // Pre-populate the fetchBalance field with the known wallet address
+    if (currentWalletAddress) {
+        const balInput = document.getElementById('balanceAddressInput');
+        if (balInput && !balInput.value) {
+            balInput.value = currentWalletAddress;
+        }
+    }
+
+    // Auth
     document.getElementById('getAuthTokenBtn')?.addEventListener('click', getAuthToken);
+    document.getElementById('copyAuthTokenBtn')?.addEventListener('click', copyAuthToken);
+
+    // Balance
     document.getElementById('balanceForm')?.addEventListener('submit', handleFetchBalance);
+
+    // Todo
     document.getElementById('addTodoForm')?.addEventListener('submit', handleAddTodo);
     document.getElementById('fetchTodosBtn')?.addEventListener('click', fetchTodos);
+
+    // Console
     document.getElementById('clearConsoleBtn')?.addEventListener('click', () => {
-        document.getElementById('consologger').innerHTML = '';
+        const loggerEl = document.getElementById('consologger');
+        if (loggerEl) {
+            loggerEl.innerHTML = '';
+        }
         logToConsole('Console cleared.', 'info');
     });
-    document.getElementById('copyAuthTokenBtn')?.addEventListener('click', copyAuthToken);
 
     // Wallet import
     const importWalletBtn = document.getElementById('importWalletBtn');
@@ -356,11 +499,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const data = await res.json();
                 if (data.success) {
+                    hasLocalWallet = true;
+                    currentWalletAddress = data.address;
+
                     showStatus(`Wallet loaded on server: ${data.address}`, 'success', 'wallet-status');
                     logToConsole(`Wallet loaded. Address: ${data.address}`, 'info');
-                    phraseInput.value = '';
-                    document.getElementById('recoveryPhraseSection').style.display = 'none';
-                    importWalletBtn.textContent = 'Wallet Loaded';
+
+                    // Hide the import form
+                    const noWalletSec = document.getElementById('noWalletSection');
+                    if (noWalletSec) noWalletSec.style.display = 'none';
+
+                    // Show the walletLoadedSection
+                    const wls = document.getElementById('walletLoadedSection');
+                    if (wls) wls.style.display = '';
+                    const currAddr = document.getElementById('currentWalletAddress');
+                    if (currAddr) {
+                        currAddr.textContent = data.address;
+                    }
+
+                    // Prepopulate the fetch balance input
+                    const balInput = document.getElementById('balanceAddressInput');
+                    if (balInput) {
+                        balInput.value = data.address;
+                    }
+
+                    // Re-check buttons
+                    updateButtonStates(getCurrentAuthToken());
                 } else {
                     showStatus(`Error: ${data.error}`, 'error', 'wallet-status');
                     logToConsole(data.error, 'error');
@@ -373,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Toggle "play" / "info"
+    // Mode switch icons
     document.querySelectorAll('.mode-switch-icon').forEach(icon => {
         icon.addEventListener('click', () => toggleSectionMode(icon));
     });
