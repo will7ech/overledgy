@@ -78,15 +78,14 @@ p {
     border: 1px solid var(--border-color);
 }
 
-#auth-status:empty,
-#transaction-status:empty,
-#balance-status:empty {
-    display: none;
-}
-
 .section-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+}
+
+.section-header h2 {
+    margin: 0;
 }
 
 .section-header .mode-switch-icon {
@@ -147,10 +146,6 @@ input[type="text"]:focus {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.btn:active:not(:disabled) {
-    transform: none;
-}
-
 .btn:disabled {
     background-color: var(--disabled-bg);
     color: var(--disabled-color);
@@ -184,10 +179,6 @@ input[type="text"]:focus {
     transition: box-shadow 0.3s ease;
 }
 
-.btn-toggle:hover {
-    background-color: var(--secondary-dark);
-}
-
 .todo-container {
     margin-top: 1.5rem;
 }
@@ -202,11 +193,6 @@ input[type="text"]:focus {
     margin-bottom: 0.8rem;
     border-left: 4px solid var(--primary-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: box-shadow 0.2s ease;
-}
-
-.todo-item:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .todo-item.completed {
@@ -242,7 +228,8 @@ input[type="text"]:focus {
 
 #transaction-status,
 #auth-status,
-#balance-status {
+#balance-status,
+#wallet-status {
     padding: 0.8rem;
     margin: 1rem 0;
     border-radius: var(--border-radius);
@@ -333,13 +320,8 @@ input[type="text"]:focus {
     border-radius: var(--border-radius);
     font-size: 0.8rem;
     cursor: pointer;
-    transition: background-color 0.3s;
     float: right;
     z-index: 999;
-}
-
-.btn-clear-console:hover {
-    background-color: #c0392b;
 }
 
 textarea {
@@ -365,10 +347,6 @@ textarea {
     border-radius: var(--border-radius);
     padding: 1rem;
     border-left: 4px solid var(--secondary-color);
-}
-
-.balance-display p {
-    margin-bottom: 0.5rem;
 }
 
 .footer-content {
@@ -397,67 +375,13 @@ textarea {
 }
 
 @media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
-
-    h1 {
-        font-size: 1.8rem;
-    }
-
-    .todo-form {
-        flex-direction: column;
-    }
-
-    .todo-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .todo-content {
-        margin-bottom: 0.8rem;
-        width: 100%;
-    }
-
-    .todo-actions {
-        margin-left: 0;
-        width: 100%;
-    }
-
-    .btn-toggle {
-        width: 100%;
-        padding: 0.6rem;
-    }
-
     .consologger {
         max-height: 250px;
-    }
-
-    .social-icons {
-        gap: 1rem;
-    }
-
-    .social-icons img {
-        width: 40px;
-        height: 40px;
     }
 }
 
 @media (max-width: 480px) {
-    .card {
-        padding: 1rem;
-    }
-
-    h1 {
-        font-size: 1.5rem;
-    }
-
     .consologger {
         max-height: 200px;
-    }
-
-    .social-icons img {
-        width: 35px;
-        height: 35px;
     }
 }

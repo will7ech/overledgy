@@ -1,0 +1,65 @@
+<section id="todo-section" class="card">
+    <div class="section-header" style="margin-bottom: 0;">
+        <div>
+            <h2 class="play-mode-title">Todo List</h2>
+            <h2 class="info-mode-title" style="display: none;">How to interact with a smart contract</h2>
+        </div>
+        <img
+                src="/assets/images/icon-question.png"
+                alt="mode switch"
+                class="mode-switch-icon"
+        />
+    </div>
+    <div class="play-mode slide-toggle open">
+        <form id="addTodoForm" class="todo-form">
+            <input
+                    type="text"
+                    name="content"
+                    placeholder="Enter new todo"
+                    required
+            />
+            <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="addTodoBtn"
+                    <%= !token ? 'disabled="disabled"' : '' %>
+            >Add Todo</button>
+        </form>
+        <div id="transaction-status"></div>
+
+        <div id="todoList" class="todo-container">
+            <% if (todos && todos.length > 0) { %>
+                <h3>Your Todos</h3>
+                <% todos.forEach(t => { %>
+                    <div class="todo-item <%= t.completed ? 'completed' : '' %>">
+                        <div class="todo-content">
+                            <span class="todo-text"><%= t.content %></span>
+                            <span class="todo-id">ID: <%= t.id %></span>
+                        </div>
+                        <div class="todo-actions">
+                            <button class="btn-toggle" data-id="<%= t.id %>">
+                                <%= t.completed ? 'Undone' : 'Done' %>
+                            </button>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <p>Click "Fetch Todos" to load your todo items from the blockchain.</p>
+            <% } %>
+        </div>
+
+        <button
+                id="fetchTodosBtn"
+                class="btn btn-secondary"
+                style="margin-top: 1rem;"
+                <%= !token ? 'disabled="disabled"' : '' %>
+        >Fetch Todos from Blockchain</button>
+    </div>
+    <div class="info-mode slide-toggle">
+        <div class="info-mode-title" style="display: none;">
+            <h2>How to interact with a smart contract</h2>
+        </div>
+        <p>This calls a TodoList smart contract on Ethereum Sepolia. We prepare the transaction via Overledger, sign it
+            (server‐side), and execute it.</p>
+    </div>
+</section>

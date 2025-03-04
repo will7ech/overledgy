@@ -1,0 +1,38 @@
+<section id="wallet-section" class="card">
+    <div class="section-header" style="margin-bottom: 0;">
+        <div>
+            <h2 class="play-mode-title">Wallet</h2>
+            <h2 class="info-mode-title" style="display: none;">Load or Import a Wallet</h2>
+        </div>
+        <img
+                src="/assets/images/icon-question.png"
+                alt="mode switch"
+                class="mode-switch-icon"
+        />
+    </div>
+    <div class="play-mode slide-toggle open">
+        <% if (!walletDetected) { %>
+            <p>No .env wallet found. Load your wallet from a recovery phrase.</p>
+            <div id="recoveryPhraseSection">
+        <textarea
+                id="recoveryPhraseInput"
+                rows="3"
+                style="width:100%;"
+                placeholder="Enter your 12/24 word phrase here"
+        ></textarea>
+            </div>
+            <button id="importWalletBtn" class="btn btn-primary">Load Wallet from Recovery Phrase</button>
+        <% } else { %>
+            <p>.env wallet found! The server can sign transactions directly.</p>
+        <% } %>
+        <div id="wallet-status"></div>
+    </div>
+    <div class="info-mode slide-toggle">
+        <div class="info-mode-title" style="display: none;">
+            <h2>Load or Import a Wallet</h2>
+        </div>
+        <p>You can define <code>MY_WALLET_PRIVATE_KEY</code> and <code>MY_WALLET_ADDRESS</code> in your <code>.env</code>,
+            or you can import a wallet from a recovery phrase. The private key is stored server-side in memory for signing.
+        </p>
+    </div>
+</section>

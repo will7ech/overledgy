@@ -1,0 +1,43 @@
+<section id="auth-section" class="card">
+    <div class="section-header" style="margin-bottom: 0;">
+        <div>
+            <h2 class="play-mode-title">Auth Token</h2>
+            <h2 class="info-mode-title" style="display: none;">How to retrieve a token</h2>
+        </div>
+        <img
+                src="/assets/images/icon-question.png"
+                alt="mode switch"
+                class="mode-switch-icon"
+        />
+    </div>
+    <div class="play-mode slide-toggle open">
+        <div id="auth-token-display">
+            <% if (token) { %>
+                <div class="token-container">
+                    <label for="currentToken">Current token:</label>
+                    <textarea id="currentToken" rows="3" readonly><%= token %></textarea>
+                </div>
+                <button id="getAuthTokenBtn" class="btn btn-primary">Get Auth Token</button>
+                <button id="copyAuthTokenBtn" class="btn btn-secondary">Copy Token</button>
+                <div id="auth-status"></div>
+            <% } else { %>
+                <p>No token set. Please get an auth token before using the app.</p>
+                <button id="getAuthTokenBtn" class="btn btn-primary">Get Auth Token</button>
+                <button id="copyAuthTokenBtn" class="btn btn-secondary" disabled>Copy Token</button>
+                <div id="auth-status"></div>
+            <% } %>
+        </div>
+    </div>
+    <div class="info-mode slide-toggle">
+        <div class="info-mode-title" style="display: none;">
+            <h2>How to retrieve a token</h2>
+        </div>
+        <p>Overledger uses OAuth 2.0. To retrieve a token, you make a <strong>POST</strong> request to:</p>
+        <pre>https://auth.overledger.dev/oauth2/token</pre>
+        <p>Include your Overledger API Key and Secret in the Authorization header, using Basic Auth. The body should
+            include:</p>
+        <pre>grant_type=client_credentials</pre>
+        <p>Overledger responds with a JSON object containing your access token. Use <code>Bearer TOKEN</code> for
+            subsequent requests.</p>
+    </div>
+</section>

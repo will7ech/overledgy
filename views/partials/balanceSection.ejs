@@ -1,0 +1,40 @@
+<section id="balance-section" class="card">
+    <div class="section-header" style="margin-bottom: 0;">
+        <div>
+            <h2 class="play-mode-title">Fetch Address Balance</h2>
+            <h2 class="info-mode-title" style="display: none;">How to fetch a balance</h2>
+        </div>
+        <img
+                src="/assets/images/icon-question.png"
+                alt="mode switch"
+                class="mode-switch-icon"
+        />
+    </div>
+    <div class="play-mode slide-toggle open">
+        <form id="balanceForm" class="todo-form">
+            <input
+                    type="text"
+                    id="balanceAddressInput"
+                    pattern="[a-zA-Z0-9]+"
+                    required
+                    value="<%= walletAddress || '' %>"
+            />
+            <button
+                    type="submit"
+                    id="fetchBalanceBtn"
+                    class="btn btn-primary"
+                    <%= !token ? 'disabled="disabled"' : '' %>
+            >Fetch Balance</button>
+        </form>
+        <div id="balance-status"></div>
+        <div id="balance-result" class="balance-result"></div>
+    </div>
+    <div class="info-mode slide-toggle">
+        <div class="info-mode-title" style="display: none;">
+            <h2>How to fetch a balance</h2>
+        </div>
+        <p>To fetch an address balance, POST to
+        <pre>https://api.overledger.dev/v2/autoexecution/search/address/balance/ADDRESS</pre>
+        with the correct location (e.g. ethereum sepolia) and bearer token.</p>
+    </div>
+</section>
