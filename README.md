@@ -2,7 +2,8 @@
 
 A simple yet comprehensive demonstration of interacting with blockchain technologies through Overledger API. This Todo app allows you to create, manage, and track your tasks on the Ethereum Sepolia testnet.
 
-[![YouTube](http://i.ytimg.com/vi/JyglRfUYvNk/hqdefault.jpg)](https://www.youtube.com/watch?v=JyglRfUYvNk)
+**Watch the demo video:**
+[![YouTube](https://i3.ytimg.com/vi/JyglRfUYvNk/maxresdefault.jpg)](https://www.youtube.com/watch?v=JyglRfUYvNk)
 
 ## Features
 
