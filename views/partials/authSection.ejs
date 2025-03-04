@@ -32,12 +32,19 @@
         <div class="info-mode-title" style="display: none;">
             <h2>How to retrieve a token</h2>
         </div>
-        <p>Overledger uses OAuth 2.0. To retrieve a token, you make a <strong>POST</strong> request to:</p>
-        <pre>https://auth.overledger.dev/oauth2/token</pre>
-        <p>Include your Overledger API Key and Secret in the Authorization header, using Basic Auth. The body should
+        <p>Basically, a token is a string that allows you to access the Overledger API. It's like a key that you need to have in order to open the door to the API.</p>
+        <p>This key is unique to you and your application, so don't share it with anyone else. If you think someone else has your key, you can always generate a new one.</p>
+        <p>Overledger uses OAuth 2.0. To retrieve a token, you make a <strong class="info-method method-post">POST</strong> request to:</p>
+        <pre class="info-code">https://auth.overledger.dev/oauth2/token</pre>
+        <p>Include your Overledger API Key and Secret in the Authorization header, using Basic Auth.</p>
+        <p>This means you need to encode your API Key and Secret in Base64, and include them in the header like this:</p>
+        <pre class="info-code">Authorization: Basic BASE64(API_KEY:API_SECRET)</pre>
+        <p>The body should
             include:</p>
-        <pre>grant_type=client_credentials</pre>
+        <pre class="info-code">grant_type=client_credentials</pre>
         <p>Overledger responds with a JSON object containing your access token. Use <code>Bearer TOKEN</code> for
             subsequent requests.</p>
+        <p>For example:</p>
+        <pre class="info-code">Authorization: Bearer YOUR_TOKEN</pre>
     </div>
 </section>

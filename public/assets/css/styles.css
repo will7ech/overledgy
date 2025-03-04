@@ -343,6 +343,32 @@ textarea {
     margin-top: 1rem;
 }
 
+.info-code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    padding: 1rem;
+    background-color: var(--consologger-bg);
+    color: var(--consologger-text);
+}
+
+.info-method {
+    display: inline-block;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+    font-weight: bold;
+    background-color: var(--consologger-bg);
+    color: var(--consologger-text);
+    border-radius: var(--border-radius);
+}
+
+.info-method.method-post {
+    background-color: var(--primary-color);
+}
+
+.info-method.method-get {
+    background-color: var(--secondary-color);
+}
+
 .balance-display {
     background-color: #252525;
     border-radius: var(--border-radius);
