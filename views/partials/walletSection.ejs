@@ -16,12 +16,12 @@
         <div id="noWalletSection" style="<%= walletDetected ? 'display: none;' : '' %>">
             <p>No .env wallet found. Load your wallet from a recovery phrase.</p>
             <div id="recoveryPhraseSection">
-        <textarea
-                id="recoveryPhraseInput"
-                rows="3"
-                style="width:100%;"
-                placeholder="Enter your 12/24 word phrase here"
-        >sand wood scissors erase absorb mouse grain caution cycle laugh document target</textarea>
+            <textarea
+                    id="recoveryPhraseInput"
+                    rows="3"
+                    style="width:100%;"
+                    placeholder="Enter your 12/24 word phrase here"
+            ></textarea>
             </div>
             <button id="importWalletBtn" class="btn btn-primary">Load Wallet from Recovery Phrase</button>
         </div>
@@ -41,9 +41,9 @@
             <h2>Load or Import a Wallet</h2>
         </div>
         <p>
-            You can define <code>MY_WALLET_PRIVATE_KEY</code> and <code>MY_WALLET_ADDRESS</code>
-            in your <code>.env</code>, or import a wallet from a recovery phrase.
-            The private key is stored server-side in memory for signing.
+            You can define <code>MY_WALLET_ADDRESS</code> and <code>MY_WALLET_PRIVATE_KEY</code>
+            in your <code>.env</code>, or just import a wallet from a recovery phrase.
         </p>
+        <p>This is of course intended to be used with test wallets, so you can play around with the Overledger API.</p>
     </div>
 </section>

@@ -3,7 +3,9 @@
 <%- include('partials/authSection', { token }) %>
 <%- include('partials/walletSection', { walletDetected, walletAddress }) %>
 <%- include('partials/balanceSection', { token, walletAddress }) %>
-<%- include('partials/todoSection', { token, todos }) %>
+<%- include('partials/deploySection') %>
+<%- include('partials/todoSection', { token, todos, contractAddress }) %>
+<%- include('partials/transactionsSection') %>
 <%- include('partials/consoleSection') %>
 
 <%- include('partials/footer') %>

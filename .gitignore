@@ -1,3 +1,13 @@
+# IDE
+.vscode
 .idea
+
+# Secrets
 .env
+
+# Node modules
 node_modules
+
+# AI tooling
+prompt.txt
+files-to-include-in-prompt.txt

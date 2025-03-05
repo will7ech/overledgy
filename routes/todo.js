@@ -1,26 +1,22 @@
-/**
- * routes/todo.js
- */
 const express = require('express');
 const router = express.Router();
 const { readSmartContract } = require('../helpers/readSmartContract');
 const { writeSmartContract } = require('../helpers/writeSmartContract');
 const { isWalletLoaded, getWalletAddress } = require('../services/walletService');
+const { setContractAddress, getContractAddress } = require('../services/contractService');
 
-/**
- * Recursively read all the user's todos from Overledger.
- */
+// Recursively read all the user's todos from Overledger
 async function fetchTodos() {
-    // Must have an address
-    if (!isWalletLoaded()) {
-        // If no wallet is loaded, returns empty
-        return { logs: [], todos: [] };
-    }
-    const address = getWalletAddress().toLowerCase();
     const logs = [];
     const todos = [];
 
-    // 1) getTodoCount(address)
+    // 1) If no wallet => no address => return empty
+    if (!isWalletLoaded()) {
+        return { logs, todos };
+    }
+    const address = getWalletAddress().toLowerCase();
+
+    // 2) getTodoCount(address)
     const countResp = await readSmartContract(
         'getTodoCount',
         [{ type: 'address', value: address }],
@@ -29,7 +25,7 @@ async function fetchTodos() {
     logs.push(countResp);
     const userCount = parseInt(countResp.response.outputParameters?.[0]?.value || '0');
 
-    // 2) For each index => getTodoId => then read the todo struct
+    // 3) For each index => getTodoId(address, i) => then read the actual struct
     for (let i = 0; i < userCount; i++) {
         const todoIdCall = await readSmartContract(
             'getTodoId',
@@ -43,25 +39,24 @@ async function fetchTodos() {
 
         const todoId = parseInt(todoIdCall.response.outputParameters?.[0]?.value || '0');
         if (todoId > 0) {
+            // If your contract's struct has 4 fields, do so:
             const todoCall = await readSmartContract(
                 'todos',
                 [{ type: 'uint256', value: todoId.toString() }],
                 [
-                    { type: 'uint256' },
-                    { type: 'string' },
-                    { type: 'bool' },
-                    { type: 'address' }
+                    { type: 'uint256' }, // id
+                    { type: 'string' },  // content
+                    { type: 'bool' },    // completed
+                    { type: 'address' }  // owner
                 ]
             );
             logs.push(todoCall);
 
-            if (todoCall.response.outputParameters && todoCall.response.outputParameters.length >= 4) {
+            if (todoCall.response.outputParameters?.length >= 4) {
                 const idVal = parseInt(todoCall.response.outputParameters[0].value);
                 const contentVal = todoCall.response.outputParameters[1].value;
                 const completedVal = todoCall.response.outputParameters[2].value;
-                const completed = typeof completedVal === 'boolean'
-                    ? completedVal
-                    : completedVal === 'true' || completedVal === true;
+                const completed = (completedVal === true || completedVal === 'true');
 
                 todos.push({
                     id: idVal,
@@ -74,9 +69,6 @@ async function fetchTodos() {
     return { logs, todos };
 }
 
-/**
- * GET /todos => fetch from chain
- */
 router.get('/todos', async (req, res) => {
     try {
         const { logs, todos } = await fetchTodos();
@@ -135,5 +127,19 @@ router.post('/todo/toggle/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+/**
+ * POST /todo/setContract
+ * Manually override the contract address stored on the server
+ */
+router.post('/todo/setContract', (req, res) => {
+    const { contractAddress } = req.body;
+    if (!contractAddress) {
+        return res.status(400).json({ error: 'Missing contract address.' });
+    }
+    setContractAddress(contractAddress);
+    return res.json({ success: true, contractAddress });
+});
+
 
 module.exports = router;

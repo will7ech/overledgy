@@ -1,0 +1,38 @@
+<section id="deploy-section" class="card">
+    <div class="section-header">
+        <div>
+            <h2 class="play-mode-title">Deploy Smart Contract</h2>
+            <h2 class="info-mode-title" style="display: none;">How to deploy a smart contract</h2>
+        </div>
+        <img
+                src="/assets/images/icon-question.png"
+                alt="mode switch"
+                class="mode-switch-icon"
+        />
+    </div>
+    <div class="play-mode slide-toggle open">
+        <form id="deployContractForm" class="todo-form">
+            <textarea
+                    id="bytecodeInput"
+                    rows="8"
+                    style="width: 100%;"
+                    placeholder="Paste your contract bytecode here"
+            ></textarea>
+            <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="deployContractBtn"
+            >
+                Deploy Contract
+            </button>
+        </form>
+        <div id="deploy-status"></div>
+    </div>
+    <div class="info-mode slide-toggle">
+        <div class="info-mode-title" style="display: none;">
+            <h2>How to deploy a smart contract</h2>
+        </div>
+        <p>This uses Overledger's <code>deployments/smart-contracts</code> prepare‐sign‐execute flow.
+            We only handle contracts that do not require constructor parameters.</p>
+    </div>
+</section>

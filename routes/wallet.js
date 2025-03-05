@@ -1,6 +1,3 @@
-/**
- * routes/wallet.js
- */
 const express = require('express');
 const router = express.Router();
 const { importWalletFromPhrase, isWalletLoaded, getWalletAddress } = require('../services/walletService');

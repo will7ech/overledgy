@@ -1,7 +1,9 @@
 <section id="todo-section" class="card">
     <div class="section-header">
         <div>
-            <h2 class="play-mode-title">Todo List</h2>
+            <h2 class="play-mode-title">
+                Todo List
+            </h2>
             <h2 class="info-mode-title" style="display: none;">How to interact with a smart contract</h2>
         </div>
         <img
@@ -10,55 +12,80 @@
                 class="mode-switch-icon"
         />
     </div>
+
     <div class="play-mode slide-toggle open">
-        <form id="addTodoForm" class="todo-form">
+        <!-- CONTRACT SET/UNSET DIV -->
+        <div
+                id="setContractDiv"
+                style="<%= contractAddress ? 'display:none;' : '' %>"
+        >
+            <p>The To-Do list items live in a smart contract. Please deploy one in the previous section or just use the one I deployed.</p>
             <input
                     type="text"
-                    name="content"
-                    placeholder="Enter new todo"
-                    required
+                    id="manualContractAddressInput"
+                    value="0x0335C98F42677e287fbE828BB99D1d746461f866"
+                    placeholder="Enter contract address"
             />
             <button
-                    type="submit"
+                    id="setContractAddressBtn"
                     class="btn btn-primary"
-                    id="addTodoBtn"
-                    <%= !token ? 'disabled="disabled"' : '' %>
-            >Add Todo</button>
-        </form>
-        <div id="transaction-status"></div>
-
-        <div id="todoList" class="todo-container">
-            <% if (todos && todos.length > 0) { %>
-                <h3>Your Todos</h3>
-                <% todos.forEach(t => { %>
-                    <div class="todo-item <%= t.completed ? 'completed' : '' %>">
-                        <div class="todo-content">
-                            <span class="todo-text"><%= t.content %></span>
-                            <span class="todo-id">ID: <%= t.id %></span>
-                        </div>
-                        <div class="todo-actions">
-                            <button class="btn-toggle" data-id="<%= t.id %>">
-                                <%= t.completed ? 'Undone' : 'Done' %>
-                            </button>
-                        </div>
-                    </div>
-                <% }) %>
-            <% } else { %>
-                <p>Click "Fetch Todos" to load your todo items from the blockchain.</p>
-            <% } %>
+                    type="button"
+                    onclick="setTodoContractAddress()"
+            >Set Contract</button>
         </div>
 
-        <button
-                id="fetchTodosBtn"
-                class="btn btn-secondary"
-                <%= !token ? 'disabled="disabled"' : '' %>
-        >Fetch Todos from Blockchain</button>
+        <div
+                id="todoFeaturesDiv"
+                style="<%= contractAddress ? '' : 'display:none;' %>"
+        >
+            <h3>Contract: <span id="currentContractAddressSpan"><%= contractAddress || 'none' %></span></h3>
+            <form id="addTodoForm" class="todo-form">
+                <input
+                        type="text"
+                        name="content"
+                        placeholder="Enter new todo"
+                        required
+                />
+                <button
+                        type="submit"
+                        class="btn btn-primary"
+                        id="addTodoBtn"
+                >Add Todo</button>
+            </form>
+            <div id="transaction-status"></div>
+
+            <div id="todoList" class="todo-container">
+                <% if (todos && todos.length > 0) { %>
+                    <h3>Your Todos</h3>
+                    <% todos.forEach(t => { %>
+                        <div class="todo-item <%= t.completed ? 'completed' : '' %>">
+                            <div class="todo-content">
+                                <span class="todo-text"><%= t.content %></span>
+                                <span class="todo-id">ID: <%= t.id %></span>
+                            </div>
+                            <div class="todo-actions">
+                                <button class="btn-toggle" data-id="<%= t.id %>">
+                                    <%= t.completed ? 'Undone' : 'Done' %>
+                                </button>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <p>No todos found. Click "Fetch Todos" to load your items from the blockchain.</p>
+                <% } %>
+            </div>
+
+            <button
+                    id="fetchTodosBtn"
+                    class="btn btn-secondary"
+            >Fetch Todos from Blockchain</button>
+        </div>
     </div>
+
     <div class="info-mode slide-toggle">
         <div class="info-mode-title" style="display: none;">
             <h2>How to interact with a smart contract</h2>
         </div>
-        <p>This calls a TodoList smart contract on Ethereum Sepolia. We prepare the transaction via Overledger, sign it
-            (server‐side), and execute it.</p>
+        <p>This calls our deployed contract on Ethereum Sepolia. We prepare the transaction via Overledger, sign it on the server, and execute it.</p>
     </div>
 </section>

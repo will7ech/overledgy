@@ -412,3 +412,29 @@ textarea {
         max-height: 200px;
     }
 }
+
+/* NEW: Transaction card layout */
+.transactions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.transaction-card {
+    background-color: #252525;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    border-left: 4px solid var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.transaction-time,
+.transaction-type,
+.transaction-id,
+.transaction-status {
+    margin: 0.5rem 0;
+}
+
+.transaction-update-btn {
+    margin-top: 1rem;
+}

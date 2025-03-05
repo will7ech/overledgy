@@ -1,6 +1,3 @@
-/**
- * walletService.js
- */
 const { Wallet } = require('ethers');
 
 let inMemoryPrivateKey = null;

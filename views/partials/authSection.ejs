@@ -30,21 +30,110 @@
     </div>
     <div class="info-mode slide-toggle">
         <div class="info-mode-title" style="display: none;">
-            <h2>How to retrieve a token</h2>
+            <h2>Understanding and Retrieving Your Overledger Auth Token</h2>
         </div>
-        <p>Basically, a token is a string that allows you to access the Overledger API. It's like a key that you need to have in order to open the door to the API.</p>
-        <p>This key is unique to you and your application, so don't share it with anyone else. If you think someone else has your key, you can always generate a new one.</p>
-        <p>Overledger uses OAuth 2.0. To retrieve a token, you make a <strong class="info-method method-post">POST</strong> request to:</p>
+        <p>An Authentication Token (Auth Token) is essential for securely accessing the Overledger API. Think of it as a
+            unique digital key that verifies your identity and grants your application the necessary permissions to
+            interact with Overledger's blockchain services.</p>
+
+        <h3>Why Do You Need an Auth Token?</h3>
+        <p>The Auth Token ensures that only authorized users and applications can access the Overledger API. This
+            security measure protects your application and data from unauthorized access, maintaining the integrity and
+            confidentiality of blockchain transactions.</p>
+
+        <h3>How to Retrieve an Auth Token</h3>
+        <p>Overledger uses the OAuth 2.0 protocol for authentication, specifically the <code>client_credentials</code>
+            grant type. To retrieve an Auth Token, you'll need to make a <strong
+                    class="info-method method-post">POST</strong> request to the Overledger authentication server.</p>
+
+        <p><strong>Endpoint:</strong></p>
         <pre class="info-code">https://auth.overledger.dev/oauth2/token</pre>
-        <p>Include your Overledger API Key and Secret in the Authorization header, using Basic Auth.</p>
-        <p>This means you need to encode your API Key and Secret in Base64, and include them in the header like this:</p>
-        <pre class="info-code">Authorization: Basic BASE64(API_KEY:API_SECRET)</pre>
-        <p>The body should
-            include:</p>
-        <pre class="info-code">grant_type=client_credentials</pre>
-        <p>Overledger responds with a JSON object containing your access token. Use <code>Bearer TOKEN</code> for
-            subsequent requests.</p>
-        <p>For example:</p>
-        <pre class="info-code">Authorization: Bearer YOUR_TOKEN</pre>
+
+        <h4>Steps to Retrieve the Token:</h4>
+        <ol>
+            <li><strong>Prepare Your Credentials:</strong> Ensure you have your Overledger API Key and API Secret. These
+                are provided when you register your application with Overledger.
+            </li>
+            <li><strong>Encode Credentials:</strong> Combine your API Key and API Secret into a single string separated
+                by a colon, like so: <code>API_KEY:API_SECRET</code>. Then, encode this string using Base64 encoding.
+            </li>
+            <p><em>Example:</em></p>
+            <pre class="info-code">Authorization: Basic {Base64(API_KEY:API_SECRET)}</pre>
+            <li><strong>Set Request Headers:</strong> Include the following headers in your POST request:
+                <ul>
+                    <li><code>Authorization: Basic {Base64EncodedCredentials}</code></li>
+                    <li><code>Content-Type: application/x-www-form-urlencoded</code></li>
+                </ul>
+            </li>
+            <li><strong>Set Request Body:</strong> Include the grant type parameter in the body of your request:
+                <pre class="info-code">grant_type=client_credentials</pre>
+            </li>
+            <li><strong>Send the Request:</strong> Use your preferred method (e.g., cURL, Postman, or code) to send the
+                POST request to the authentication endpoint.
+            </li>
+        </ol>
+
+        <h4>Sample cURL Command:</h4>
+        <pre class="info-code">curl -X POST 'https://auth.overledger.dev/oauth2/token' \
+  -H 'Authorization: Basic {Base64EncodedAPIKeyAndSecret}' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=client_credentials'</pre>
+
+        <h4>Understanding the Response:</h4>
+        <p>A successful response will return a JSON object containing your access token and additional information:</p>
+        <pre class="info-code">{
+  "access_token": "YOUR_ACCESS_TOKEN",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}</pre>
+        <ul>
+            <li><code>access_token</code>: The token you will use to authenticate your API requests.</li>
+            <li><code>token_type</code>: The type of token (usually "Bearer").</li>
+            <li><code>expires_in</code>: The duration in seconds before the token expires.</li>
+        </ul>
+
+        <h3>Using the Auth Token</h3>
+        <p>With your Auth Token, you can now make authenticated requests to the Overledger API. Include the token in the
+            <code>Authorization</code> header of your requests, prefixed with the word "Bearer":</p>
+        <pre class="info-code">Authorization: Bearer YOUR_ACCESS_TOKEN</pre>
+
+        <p><em>Example Request:</em></p>
+        <pre class="info-code">curl -X GET 'https://api.overledger.io/v2/transactions' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json'</pre>
+
+        <h3>Token Expiry and Renewal</h3>
+        <p>Auth Tokens are time-limited for security purposes. When your token expires (as indicated by the <code>expires_in</code>
+            value), you will need to request a new token by repeating the authentication process.</p>
+
+        <h3>Security Best Practices</h3>
+        <ul>
+            <li><strong>Keep Credentials Secure:</strong> Do not expose your API Key, API Secret, or Auth Tokens in
+                publicly accessible areas such as GitHub repositories, client-side code, or shared logs.
+            </li>
+            <li><strong>Use Environment Variables:</strong> Store sensitive information like API keys in environment
+                variables or secured vault services.
+            </li>
+            <li><strong>Regularly Rotate Credentials:</strong> Update your API keys and secrets periodically to minimize
+                the risk of unauthorized access.
+            </li>
+            <li><strong>Monitor Usage:</strong> Keep an eye on your API usage to detect any unusual activity that might
+                indicate a security issue.
+            </li>
+        </ul>
+
+        <h3>Troubleshooting</h3>
+        <p>If you encounter issues while retrieving or using the Auth Token:</p>
+        <ul>
+            <li><strong>Check Credentials:</strong> Ensure your API Key and API Secret are correct and properly encoded.
+            </li>
+            <li><strong>Verify Headers:</strong> Confirm that all required headers are correctly set in your request.
+            </li>
+            <li><strong>Review Endpoint URL:</strong> Make sure you're sending requests to the correct authentication
+                endpoint.
+            </li>
+            <li><strong>Inspect Error Messages:</strong> Review any error responses for clues about what might be wrong.
+            </li>
+        </ul>
     </div>
 </section>

@@ -1,7 +1,3 @@
-/**
- * routes/balance.js
- * Route to fetch an address balance via Overledger.
- */
 const express = require('express');
 const router = express.Router();
 const { fetchAddressBalance } = require('../services/overledgerService');

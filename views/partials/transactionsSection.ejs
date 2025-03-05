@@ -1,0 +1,27 @@
+<section id="transactions-section" class="card">
+    <div class="section-header">
+        <div>
+            <h2 class="play-mode-title">Transactions</h2>
+            <h2 class="info-mode-title" style="display: none;">Check Transaction Status</h2>
+        </div>
+        <img
+                src="/assets/images/icon-question.png"
+                alt="mode switch"
+                class="mode-switch-icon"
+        />
+    </div>
+
+    <div class="play-mode slide-toggle open">
+        <!-- Container for transaction cards -->
+        <div id="transactionsContainer" class="transactions-container">
+            <!-- Cards will be inserted by JS -->
+        </div>
+    </div>
+
+    <div class="info-mode slide-toggle">
+        <div class="info-mode-title" style="display: none;">
+            <h2>Check Transaction Status</h2>
+        </div>
+        <p>Each transaction can be queried via Overledger's transaction status endpoint, to see if it succeeded or is still pending.</p>
+    </div>
+</section>

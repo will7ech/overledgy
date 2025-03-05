@@ -1,28 +1,34 @@
-/**
- * Write a transaction to the smart contract
- */
 const axios = require('axios');
 const { OVERLEDGER_API_CONFIG } = require('../config/overledgerConfig');
 const { getOverledgerHeaders } = require('../services/overledgerService');
 const { getWalletAddress } = require('../services/walletService');
 const { signTransaction } = require('./signTransaction');
+const { getContractAddress } = require('../services/contractService');
 
+/**
+ * Writes data to the smart contract
+ */
 async function writeSmartContract(functionName, inputParameters) {
+    const contractAddress = getContractAddress();
+    if (!contractAddress) {
+        throw new Error('No contract is deployed yet. Cannot write.');
+    }
+
     // Overledger expects inputParameters = [{ type, value }, ...]
     const validatedParams = inputParameters.map(p => ({
         type: p.type,
         value: p.value
     }));
 
+    // 1) PREPARE
     const preparePayload = {
         location: OVERLEDGER_API_CONFIG.NETWORK,
         functionName,
         inputParameters: validatedParams,
-        signingAccountId: getWalletAddress(), // the address we loaded
-        smartContractId: OVERLEDGER_API_CONFIG.TODO_LIST_CONTRACT_ADDRESS
+        signingAccountId: getWalletAddress(),
+        smartContractId: contractAddress
     };
 
-    // 1) PREPARE
     const prepareReq = {
         url: `${OVERLEDGER_API_CONFIG.BASE_URL}/api/preparations/transactions/smart-contracts/write`,
         method: 'POST',
@@ -62,13 +68,15 @@ async function writeSmartContract(functionName, inputParameters) {
         throw new Error(err.response?.data?.message || err.message || 'Execute request failed');
     }
 
-    // Extract optional event message
+    // Extract optional event message from Overledger's "events"
     let eventMessage = '';
     if (execResponse.data.events && execResponse.data.events.length > 0) {
         execResponse.data.events.forEach(evt => {
             if (evt.eventName === 'TodoCreated' || evt.eventName === 'TodoUpdated') {
                 const msgParam = evt.eventParameters.find(p => p.key === 'message');
-                if (msgParam) eventMessage = msgParam.value;
+                if (msgParam) {
+                    eventMessage = msgParam.value;
+                }
             }
         });
     }
