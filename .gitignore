@@ -10,4 +10,4 @@ node_modules
 
 # AI tooling
 prompt.txt
-files-to-include-in-prompt.txt
+files-in-prompt.txt
