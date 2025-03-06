@@ -63,7 +63,7 @@ window.getAuthToken = function() {
                         authDisplay.innerHTML = `
                             <div class="token-container">
                                 <label>Current token:</label>
-                                <textarea id="currentToken" rows="3" readonly>${data.token}</textarea>
+                                <textarea id="currentToken" class="light-textarea-content" rows="3" readonly>${data.token}</textarea>
                             </div>
                             <button id="getAuthTokenBtn" class="btn btn-primary">Get Auth Token</button>
                             <button id="copyAuthTokenBtn" class="btn btn-secondary">Copy Token</button>

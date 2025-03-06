@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (call.request.headers?.Authorization) {
                     call.request.headers.Authorization = trimBearer(call.request.headers.Authorization);
                 }
+
                 if (call.request.url.includes('deployments/smart-contracts')) {
                     logToConsole('Preparing contract deployment via Overledger...', 'info');
                 } else if (call.request.url.includes('executions/deployments')) {
@@ -72,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (call.request.url.includes('search/transaction')) {
                     logToConsole('Checking deployment status from Overledger...', 'info');
                 }
+
                 if (call.errorResponse) {
                     logToConsole(
                         `Overledger Error Response:\n${JSON.stringify(call.errorResponse, null, 2)}`,
@@ -90,16 +92,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.addTransactionCard(data.transactionId, data.status, 'deploySmartContract');
             }
 
-            // Show status & clear form
+            // Show status & handle contract address
             if (data.contractAddress) {
+                // We already have an address from the server
                 showStatus(`Contract deployed @ ${data.contractAddress}`, 'success', 'deploy-status');
                 logToConsole(`Deployed at: ${data.contractAddress}`, 'info');
                 window.updateContractAddressUI(data.contractAddress);
             } else {
+                // No contractAddress returned from the server
                 showStatus(`Contract deployment TX: ${data.transactionId}`, 'success', 'deploy-status');
                 logToConsole(`Deployment Tx: ${getEtherscanLink(data.transactionId)}`, 'info');
-                logToConsole('Contract address not yet known. Check transaction status later.', 'warning');
+
+                // Try to find "creates" from the Overledger calls
+                let foundCreates = null;
+                data.calls.forEach(call => {
+                    const c = call.response?.executionTransactionSearchResponse
+                        ?.transaction?.nativeData?.creates;
+                    if (!foundCreates && c && c !== 'null') {
+                        foundCreates = c;
+                    }
+                });
+
+                if (foundCreates) {
+                    // Check if we have already set a contract in the UI
+                    const currentAddrSpan = document.getElementById('currentContractAddressSpan');
+                    const currentAddrText = currentAddrSpan
+                        ? currentAddrSpan.textContent.trim()
+                        : '';
+
+                    if (!currentAddrText || currentAddrText === 'none') {
+                        // If not set, paste the new contract into the input field
+                        const setContractInput = document.getElementById('manualContractAddressInput');
+                        if (setContractInput) {
+                            setContractInput.value = foundCreates;
+                        }
+                        logToConsole(`The contract address is ${foundCreates} and was pasted into the contract address input field.`, 'info');
+                    } else {
+                        // Already have an active contract
+                        logToConsole(`You already set an active contract for the todo list. If needed, here's the newly deployed address: ${foundCreates}`, 'info');
+                    }
+                } else {
+                    // We really don't have a known contract address yet
+                    logToConsole('Contract address not yet known. Check transaction status later.', 'warning');
+                }
             }
+
+            // Reset form
             deployForm.reset();
         } catch (err) {
             showStatus('Error deploying contract.', 'error', 'deploy-status');

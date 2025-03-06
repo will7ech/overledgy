@@ -45,21 +45,13 @@ async function deploySmartContract(originalBytecode) {
             prepareReq.body,
             { headers: prepareReq.headers }
         );
-        console.log(prepareReq);
         prepResponseData = prepResponse.data;
         calls.push({ request: prepareReq, response: prepResponseData });
     } catch (err) {
-        // Log the error details for debugging
-        console.error('Overledger prepare deployment error =>', err.response?.data || err.message);
-        console.error(err);
-
-        // We push a partial call so the front-end can see it
         calls.push({
             request: prepareReq,
             errorResponse: err.response?.data || { message: err.message }
         });
-
-        // Raise a descriptive error
         const msg =
             err.response?.data?.message ||
             err.response?.data?.errors?.[0]?.description ||
@@ -75,10 +67,7 @@ async function deploySmartContract(originalBytecode) {
     let signedTransaction;
     try {
         signedTransaction = await signTransaction(nativeData);
-        console.log('SIGNED:');
-        console.log(signedTransaction);
     } catch (err) {
-        console.error('Error signing deployment transaction =>', err.message);
         throw new Error(`Error signing deployment transaction: ${err.message}`);
     }
 
@@ -100,7 +89,6 @@ async function deploySmartContract(originalBytecode) {
         execResponseData = execResponse.data;
         calls.push({ request: executeReq, response: execResponseData });
     } catch (err) {
-        console.error('Overledger execute deployment error =>', err.response?.data || err.message);
         calls.push({
             request: executeReq,
             errorResponse: err.response?.data || { message: err.message }
@@ -118,7 +106,7 @@ async function deploySmartContract(originalBytecode) {
     const transactionId = execResponseData.transactionId;
     const status = execResponseData?.status?.value || 'UNKNOWN';
 
-    // We'll do one immediate attempt to see if the contract address is known
+    // We'll do one immediate attempt to see if the contract address is known (Even if "PENDING")
     let newAddress = null;
     try {
         const statusResult = await fetchTransactionStatus(transactionId);
@@ -128,7 +116,7 @@ async function deploySmartContract(originalBytecode) {
             newAddress = creates;
             setContractAddress(newAddress); // store in memory
         }
-        // Also log that request/response for debugging
+        // Also log that request/response
         calls.push({
             request: statusResult.request,
             response: overledgerStatus
