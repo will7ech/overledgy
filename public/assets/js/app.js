@@ -32,15 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addTodoForm')?.addEventListener('submit', handleAddTodo);
     document.getElementById('fetchTodosBtn')?.addEventListener('click', fetchTodos);
 
-    // Console clear button
-    document.getElementById('clearConsoleBtn')?.addEventListener('click', () => {
-        const loggerEl = document.getElementById('consologger');
-        if (loggerEl) {
-            loggerEl.innerHTML = '';
-        }
-        logToConsole('Console cleared.', 'info');
-    });
-
     // Wallet import
     const importWalletBtn = document.getElementById('importWalletBtn');
     if (importWalletBtn) {

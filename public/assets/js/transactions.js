@@ -5,6 +5,12 @@ window.addTransactionCard = function(txId, status, txType) {
     const container = document.getElementById('transactionsContainer');
     if (!container) return;
 
+    // Remove placeholder if it's still there
+    const placeholder = document.getElementById('transaction-placeholder');
+    if (placeholder) {
+        placeholder.remove();
+    }
+
     const now = new Date().toLocaleTimeString();
 
     // Create a card
@@ -48,7 +54,7 @@ window.addTransactionCard = function(txId, status, txType) {
         try {
             await updateTransactionStatus(card, txId);
         } finally {
-            // Re-enable & revert text only if status is not yet successful
+            // Re-enable & revert text only if status is not SUCCESSFUL
             const currentStatus = card.querySelector('.transaction-status')?.textContent || '';
             if (!currentStatus.includes('SUCCESSFUL')) {
                 btnUpdate.disabled = false;
@@ -118,8 +124,7 @@ async function updateTransactionStatus(card, txId) {
 
         // If we see a 'creates' field => it's a deployed contract
         const creates =
-            data.overledgerRes?.executionTransactionSearchResponse?.transaction?.nativeData
-                ?.creates;
+            data.overledgerRes?.executionTransactionSearchResponse?.transaction?.nativeData?.creates;
         if (creates && creates !== 'null') {
             // Update the UI contract address
             window.updateContractAddressUI(creates);

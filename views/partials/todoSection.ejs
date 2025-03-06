@@ -20,18 +20,25 @@
                 style="<%= contractAddress ? 'display:none;' : '' %>"
         >
             <p>The To-Do list items live in a smart contract. Please deploy one in the previous section or just use the one I deployed.</p>
-            <input
-                    type="text"
-                    id="manualContractAddressInput"
-                    value="0x0335C98F42677e287fbE828BB99D1d746461f866"
-                    placeholder="Enter contract address"
-            />
-            <button
-                    id="setContractAddressBtn"
-                    class="btn btn-primary"
-                    type="button"
-                    onclick="setTodoContractAddress()"
-            >Set Contract</button>
+            <form
+                    id="setContractForm"
+                    class="flex-down-form"
+                    onsubmit="event.preventDefault(); setTodoContractAddress();"
+            >
+                <input
+                        type="text"
+                        id="manualContractAddressInput"
+                        value="0x0335C98F42677e287fbE828BB99D1d746461f866"
+                        placeholder="Enter contract address"
+                />
+                <button
+                        id="setContractAddressBtn"
+                        class="btn btn-primary"
+                        type="submit"
+                >
+                    Set Contract
+                </button>
+            </form>
         </div>
 
         <div
@@ -64,7 +71,10 @@
                                 <span class="todo-id">ID: <%= t.id %></span>
                             </div>
                             <div class="todo-actions">
-                                <button class="btn-toggle" data-id="<%= t.id %>">
+                                <button
+                                        class="btn-toggle <%= t.completed ? 'btn-toggle-undone' : 'btn-toggle-done' %>"
+                                        data-id="<%= t.id %>"
+                                >
                                     <%= t.completed ? 'Undone' : 'Done' %>
                                 </button>
                             </div>

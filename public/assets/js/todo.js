@@ -15,7 +15,10 @@ window.renderTodos = function(todos) {
                     <span class="todo-id">ID: ${td.id}</span>
                 </div>
                 <div class="todo-actions">
-                    <button class="btn-toggle" data-id="${td.id}">
+                    <button
+                        class="btn-toggle ${td.completed ? 'btn-toggle-undone' : 'btn-toggle-done'}"
+                        data-id="${td.id}"
+                    >
                         ${td.completed ? 'Undone' : 'Done'}
                     </button>
                 </div>

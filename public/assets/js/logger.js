@@ -12,12 +12,18 @@ window.logToConsole = function(message, type = 'info') {
     line.appendChild(tsSpan);
 
     const msgSpan = document.createElement('span');
-    msgSpan.className = `log-${type}`;
-    if (type === 'request') msgSpan.className = 'log-request';
-    if (type === 'response') msgSpan.className = 'log-response';
-    msgSpan.innerHTML = (message || '').replace(/\n/g, '<br/>');
+    if (type === 'request') {
+        msgSpan.className = 'log-request';
+    } else if (type === 'response') {
+        msgSpan.className = 'log-response';
+    } else {
+        msgSpan.className = `log-${type}`;
+    }
 
+    // Replace newlines with <br/> for display
+    msgSpan.innerHTML = (message || '').replace(/\n/g, '<br/>');
     line.appendChild(msgSpan);
+
     loggerEl.appendChild(line);
     loggerEl.scrollTop = loggerEl.scrollHeight;
 };
@@ -30,20 +36,3 @@ window.scrollToConsole = function() {
     const loggerEl = document.getElementById('consologger');
     if (loggerEl) loggerEl.scrollTop = loggerEl.scrollHeight;
 };
-
-// Ensure the Clear button remains in the DOM
-document.addEventListener('DOMContentLoaded', () => {
-    const clearConsoleBtn = document.getElementById('clearConsoleBtn');
-    if (clearConsoleBtn) {
-        clearConsoleBtn.addEventListener('click', () => {
-            const loggerEl = document.getElementById('consologger');
-            if (loggerEl) {
-                // Remove only the .consologger-line items
-                const lines = loggerEl.querySelectorAll('.consologger-line');
-                lines.forEach(line => line.remove());
-            }
-            logToConsole('Console cleared.', 'info');
-            scrollToConsole();
-        });
-    }
-});
