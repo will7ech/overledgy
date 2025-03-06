@@ -1,4 +1,4 @@
-# <img src="/assets/images/icon-overledgy-transparent.png" width="30" height="30" align="center"> Overledgy - Overledger API Demo App
+# <img src="/public/assets/images/icon-overledgy-transparent.png" width="28" height="28" align="center"> Overledgy - Overledger API Demo App
 
 Just a demo app designed to help developers explore the **powerful capabilities** of Overledger’s APIs for blockchain interaction. This app serves as an **all-in-one learning playground**, where you can  **deploy smart contracts**, **interact with the blockchain**, and **monitor transactions** in an easy and playful manner.
 
