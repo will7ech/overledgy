@@ -95,13 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show status & handle contract address
             if (data.contractAddress) {
                 // We already have an address from the server
-                showStatus(`Contract deployed @ ${data.contractAddress}`, 'success', 'deploy-status');
+                showStatus(`Contract deployed with address ${data.contractAddress}`, 'success', 'deploy-status');
                 logToConsole(`Deployed at: ${data.contractAddress}`, 'info');
                 window.updateContractAddressUI(data.contractAddress);
             } else {
                 // No contractAddress returned from the server
                 showStatus(`Contract deployment TX: ${data.transactionId}`, 'success', 'deploy-status');
-                logToConsole(`Deployment Tx: ${getEtherscanLink(data.transactionId)}`, 'info');
+                logToConsole(`Transaction: ${getEtherscanLink(data.transactionId)}`, 'info');
 
                 // Try to find "creates" from the Overledger calls
                 let foundCreates = null;
