@@ -4,11 +4,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     deployForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const bytecode = document.getElementById('bytecodeInput')?.value.trim();
-        if (!bytecode) {
+        const deployBtn = document.getElementById('deployContractBtn');
+        if (!bytecode || !deployBtn) {
             showStatus('Please provide contract bytecode.', 'error', 'deploy-status');
             return;
         }
+
+        // Disable & show "Deploying..."
+        const originalText = deployBtn.textContent;
+        deployBtn.disabled = true;
+        deployBtn.textContent = 'Deploying...';
         showStatus('Preparing contract deployment...', 'loading', 'deploy-status');
 
         try {
@@ -27,7 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.calls) {
                     data.calls.forEach(call => {
                         if (call.request?.headers?.Authorization) {
-                            call.request.headers.Authorization = trimBearer(call.request.headers.Authorization);
+                            call.request.headers.Authorization = trimBearer(
+                                call.request.headers.Authorization
+                            );
                         }
                         logToConsole(
                             `Overledger Request:\n${JSON.stringify(call.request, null, 2)}`,
@@ -48,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 showStatus(`Error deploying contract: ${data.error || 'Unknown'}`, 'error', 'deploy-status');
                 logToConsole(data.error || 'Deploy error', 'error');
-                scrollToConsole();
                 return;
             }
 
@@ -96,7 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             showStatus('Error deploying contract.', 'error', 'deploy-status');
             logToConsole(err.stack, 'error');
+        } finally {
+            // Re-enable and revert text
+            deployBtn.disabled = false;
+            deployBtn.textContent = originalText;
+            scrollToConsole();
         }
-        scrollToConsole();
     });
 });

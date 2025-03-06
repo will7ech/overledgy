@@ -23,10 +23,10 @@ window.addTransactionCard = function(txId, status, txType) {
     typeEl.textContent = `Type: ${txType || 'N/A'}`;
     card.appendChild(typeEl);
 
-    // Tx ID
+    // Tx ID (make it a link to Etherscan)
     const txEl = document.createElement('p');
     txEl.className = 'transaction-id';
-    txEl.textContent = `Transaction ID: ${txId}`;
+    txEl.innerHTML = `Transaction ID: ${getEtherscanLink(txId)}`;
     card.appendChild(txEl);
 
     // Status
@@ -40,7 +40,21 @@ window.addTransactionCard = function(txId, status, txType) {
     btnUpdate.textContent = 'Update Status';
     btnUpdate.className = 'btn btn-secondary transaction-update-btn';
     btnUpdate.addEventListener('click', async () => {
-        await updateTransactionStatus(card, txId);
+        // Disable & set text to "Checking..."
+        const originalText = btnUpdate.textContent;
+        btnUpdate.disabled = true;
+        btnUpdate.textContent = 'Checking...';
+
+        try {
+            await updateTransactionStatus(card, txId);
+        } finally {
+            // Re-enable & revert text only if status is not yet successful
+            const currentStatus = card.querySelector('.transaction-status')?.textContent || '';
+            if (!currentStatus.includes('SUCCESSFUL')) {
+                btnUpdate.disabled = false;
+                btnUpdate.textContent = originalText;
+            }
+        }
     });
     card.appendChild(btnUpdate);
 
@@ -83,7 +97,9 @@ async function updateTransactionStatus(card, txId) {
             'response'
         );
 
-        const newStatus = data.overledgerRes?.status?.value || 'UNKNOWN';
+        // The actual status is in executionTransactionSearchResponse.status.value
+        const newStatus =
+            data.overledgerRes?.executionTransactionSearchResponse?.status?.value || 'UNKNOWN';
 
         // Update the status text in the card
         const statusEl = card.querySelector('.transaction-status');
@@ -91,8 +107,19 @@ async function updateTransactionStatus(card, txId) {
             statusEl.textContent = `Status: ${newStatus}`;
         }
 
+        // If the status is SUCCESSFUL, add a special classname & remove the update button
+        if (newStatus === 'SUCCESSFUL') {
+            card.classList.add('transaction-successful');
+            const updateBtn = card.querySelector('.transaction-update-btn');
+            if (updateBtn) {
+                updateBtn.remove();
+            }
+        }
+
         // If we see a 'creates' field => it's a deployed contract
-        const creates = data.overledgerRes?.transaction?.nativeData?.creates;
+        const creates =
+            data.overledgerRes?.executionTransactionSearchResponse?.transaction?.nativeData
+                ?.creates;
         if (creates && creates !== 'null') {
             // Update the UI contract address
             window.updateContractAddressUI(creates);

@@ -32,12 +32,20 @@ window.renderTodos = function(todos) {
 
 // Fetch all todos from the server via GET /todos
 window.fetchTodos = function() {
+    const fetchBtn = document.getElementById('fetchTodosBtn');
+    if (!fetchBtn) return;
+
+    // Disable & show "Fetching..."
+    const originalText = fetchBtn.textContent;
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = 'Fetching...';
+
     showStatus('Fetching todos...', 'loading');
     logToConsole('Reading smart contract data for Todos...', 'info');
 
     fetch('/todos')
         .then(res => {
-            logToConsole(`Fetch /todos status: ${res.status}`, 'info'); // EXTRA LOG
+            logToConsole(`Fetch /todos status: ${res.status}`, 'info');
             return res.json();
         })
         .then(data => {
@@ -77,15 +85,31 @@ window.fetchTodos = function() {
             showStatus(`Error fetching todos: ${err.message}`, 'error');
             logToConsole(err.stack, 'error');
             scrollToConsole();
+        })
+        .finally(() => {
+            // Re-enable fetch button & revert text
+            fetchBtn.disabled = false;
+            fetchBtn.textContent = originalText;
         });
 };
 
 // Handle the add-todo form submission
 window.handleAddTodo = function(e) {
     e.preventDefault();
+
     const content = e.target.content.value.trim();
+    const addTodoBtn = document.getElementById('addTodoBtn');
+    if (!addTodoBtn) return;
+
+    // Disable & show "Adding..."
+    const originalText = addTodoBtn.textContent;
+    addTodoBtn.disabled = true;
+    addTodoBtn.textContent = 'Adding...';
+
     if (!content) {
         showStatus('Please enter a todo item.', 'error');
+        addTodoBtn.disabled = false;
+        addTodoBtn.textContent = originalText;
         return;
     }
     showStatus('Preparing Overledger transaction for addTodo...', 'loading');
@@ -138,12 +162,24 @@ window.handleAddTodo = function(e) {
             showStatus('Error adding todo.', 'error');
             logToConsole(err.stack, 'error');
             scrollToConsole();
+        })
+        .finally(() => {
+            // Re-enable button & revert text
+            addTodoBtn.disabled = false;
+            addTodoBtn.textContent = originalText;
         });
 };
 
 // Toggle the completion status of a todo
 window.toggleTodo = function(e) {
     const todoId = e.target.dataset.id;
+    const btn = e.target;
+    const originalText = btn.textContent;
+
+    // Disable & show "Updating..."
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+
     showStatus(`Preparing Overledger transaction for toggleTodo(${todoId})...`, 'loading');
 
     fetch(`/todo/toggle/${todoId}`, { method: 'POST' })
@@ -189,6 +225,11 @@ window.toggleTodo = function(e) {
             showStatus(`Error toggling todo. ${err.message}`, 'error');
             logToConsole(err.stack, 'error');
             scrollToConsole();
+        })
+        .finally(() => {
+            // Re-enable & revert text
+            btn.disabled = false;
+            btn.textContent = originalText;
         });
 };
 

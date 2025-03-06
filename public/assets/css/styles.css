@@ -5,6 +5,7 @@
     --secondary-dark: #2bb889;
     --danger-color: #cc1705;
     --text-color: #e1e1e1;
+    --link-color: #f8f2a4;
     --light-text: #a0a0a0;
     --background: #121212;
     --card-bg: #1e1e1e;
@@ -69,6 +70,15 @@ p {
     margin-bottom: 1rem;
 }
 
+a, a:visited {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
 .card {
     background-color: var(--card-bg);
     border-radius: var(--border-radius);
@@ -110,10 +120,20 @@ p {
     max-height: 1000px;
 }
 
-.todo-form {
+.flex-down-form {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+}
+
+.flex-down-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+textarea.smart-contract-deployment {
+    color: var(--light-text);
+    font-size: 0.6rem;
 }
 
 input[type="text"] {
@@ -273,11 +293,6 @@ input[type="text"]:focus {
     white-space: pre-wrap;
 }
 
-.consologger-line a {
-    color: inherit;
-    text-decoration: underline;
-}
-
 .log-timestamp {
     color: #666;
     margin-right: 8px;
@@ -345,10 +360,14 @@ textarea {
 
 .info-code {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     padding: 1rem;
     background-color: var(--consologger-bg);
     color: var(--consologger-text);
+    white-space: pre-wrap;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 400px;
 }
 
 .info-method {
@@ -401,19 +420,6 @@ textarea {
     transform: translateY(-5px);
 }
 
-@media (max-width: 768px) {
-    .consologger {
-        max-height: 250px;
-    }
-}
-
-@media (max-width: 480px) {
-    .consologger {
-        max-height: 200px;
-    }
-}
-
-/* NEW: Transaction card layout */
 .transactions-container {
     display: flex;
     flex-direction: column;
@@ -428,6 +434,10 @@ textarea {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.transaction-card.transaction-successful {
+    border-left-color: var(--secondary-color);
+}
+
 .transaction-time,
 .transaction-type,
 .transaction-id,
@@ -438,3 +448,8 @@ textarea {
 .transaction-update-btn {
     margin-top: 1rem;
 }
+
+.consologger {
+    max-height: 350px;
+}
+

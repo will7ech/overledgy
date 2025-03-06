@@ -1,15 +1,23 @@
 window.handleFetchBalance = async function(e) {
     e.preventDefault();
+
     const addressInput = document.getElementById('balanceAddressInput');
-    if (!addressInput) return;
-    const address = addressInput.value.trim();
-    if (!address) {
-        showStatus('Please enter an address.', 'error', 'balance-status');
-        return;
-    }
-    showStatus('Fetching address balance...', 'loading', 'balance-status');
+    const fetchBtn = document.getElementById('fetchBalanceBtn');
+    if (!addressInput || !fetchBtn) return;
+
+    // Disable & show "Fetching..." on the button
+    const originalText = fetchBtn.textContent;
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = 'Fetching...';
 
     try {
+        const address = addressInput.value.trim();
+        if (!address) {
+            showStatus('Please enter an address.', 'error', 'balance-status');
+            return;
+        }
+        showStatus('Fetching address balance...', 'loading', 'balance-status');
+
         const res = await fetch(`/balance/${address}`);
         const data = await res.json();
         if (data.success) {
@@ -49,6 +57,10 @@ window.handleFetchBalance = async function(e) {
     } catch (err) {
         showStatus('Error fetching balance.', 'error', 'balance-status');
         logToConsole(err.message, 'error');
+    } finally {
+        // Re-enable button & revert text
+        fetchBtn.disabled = false;
+        fetchBtn.textContent = originalText;
+        scrollToConsole();
     }
-    scrollToConsole();
 };
