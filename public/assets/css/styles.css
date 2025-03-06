@@ -90,6 +90,10 @@ a:hover {
     text-decoration: underline;
 }
 
+a.etherscan-link {
+    font-size: 0.7rem;
+}
+
 .card {
     background-color: var(--card-bg);
     border-radius: var(--border-radius);
@@ -309,7 +313,7 @@ textarea {
     background-color: var(--consologger-bg);
     color: var(--consologger-text);
     border-radius: var(--border-radius);
-    max-height: 350px;
+    max-height: 456px;
     overflow-y: auto;
     padding: 1rem;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -324,7 +328,7 @@ textarea {
     white-space: pre-wrap;
 }
 .log-timestamp {
-    color: #666;
+    color: var(--light-text);
     margin-right: 8px;
     font-size: 0.85rem;
 }

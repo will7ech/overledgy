@@ -17,7 +17,7 @@ window.trimBearer = function(token) {
 };
 
 window.getEtherscanLink = function(txHash) {
-    return `<a href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank">${txHash}</a>`;
+    return `<a class="etherscan-link" href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank">${txHash}</a>`;
 };
 
 window.toggleSectionMode = function(icon) {
