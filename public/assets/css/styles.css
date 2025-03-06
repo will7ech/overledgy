@@ -64,11 +64,25 @@ p {
     padding: 20px;
 }
 
-h1 {
+header {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+header img {
+    width: 50px;
+    height: 50px;
+}
+
+header h1 {
     font-size: 2.2rem;
-    margin-bottom: 1rem;
     color: var(--primary-color);
     text-align: center;
+    margin: 0;
 }
 
 h2 {
